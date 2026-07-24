@@ -10,9 +10,10 @@ synthesis visible rather than presenting an opaque answer.
 
 ## Project status
 
-**Phase 0 — Foundation.** The package, typed settings, structured-logging foundation,
-versioned API health contract, CLI, tests, and CI are operational. Clinical question
-processing and terminology/evidence integrations are not implemented yet.
+**Phase 1 — Coded-brief MVP in progress.** The package can parse the documented AMD
+question through a deterministic mock provider, retrieve live ICD-10-CM and RxNorm
+candidates, preserve alternatives, and export validated Markdown. Evidence retrieval,
+synthesis, and claim-level QA are not implemented yet.
 
 ## Planned pipeline
 
@@ -37,6 +38,10 @@ cd evidenceforge
 uv sync --extra dev
 uv run evidenceforge version
 uv run evidenceforge serve
+uv run evidenceforge brief create \
+  --question "In adults with neovascular age-related macular degeneration, how does aflibercept compare with ranibizumab for improving visual acuity?" \
+  --confirm-no-phi \
+  --output amd-coded-brief.md
 ```
 
 Open `http://127.0.0.1:8000/docs` for API documentation or call
@@ -56,7 +61,20 @@ uv run mypy src
 uv run pytest
 ```
 
-The default tests are deterministic and do not call live or paid services.
+The default tests are deterministic and do not call live or paid services. The CLI
+terminology lookup is live and therefore requires network access.
+
+Set `EVIDENCEFORGE_LLM_PROVIDER=openai` and `EVIDENCEFORGE_OPENAI_API_KEY` to use the
+production OpenAI adapter. The default mock provider exists for the AMD example and
+tests; it is not a general clinical parser.
+
+The default suite contract-tests the OpenAI request/structured-response boundary without
+a paid call. Run a credentialed integration smoke test separately before claiming a
+specific model is operational in a deployment.
+
+The CLI requires an explicit `--confirm-no-phi` declaration and applies a limited
+identifier-pattern screen before any external call. This is defense in depth, not a
+guarantee that free text is de-identified. Never enter patient data.
 
 ## Architecture and safety
 
@@ -77,4 +95,3 @@ async, allowlisted, and replaceable. See [architecture](docs/architecture.md),
 
 Licensed under Apache 2.0. See [LICENSE](LICENSE) and
 [CONTRIBUTING.md](CONTRIBUTING.md).
-

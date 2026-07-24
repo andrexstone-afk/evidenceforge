@@ -4,8 +4,11 @@ EvidenceForge is a research and evidence-synthesis prototype. It is not a medica
 device, not for diagnosis, not a substitute for clinical judgment, and not a source of
 individualized treatment recommendations.
 
-The project will not accept PHI. Ontology codes must come from terminology services,
-and medical claims must remain traceable to retrieved evidence. Model-generated
+The project prohibits PHI input. The CLI requires an explicit no-PHI declaration and
+screens for common identifier patterns before external calls, but automated screening
+cannot guarantee de-identification. Users must provide population-level questions only.
+
+Ontology codes must come from terminology services, and medical claims must remain
+traceable to retrieved evidence. Model-generated
 synthesis, inference, uncertainty, conflicting evidence, and missing evidence must be
 distinguished explicitly. High-severity QA findings will block an automatic pass.
-

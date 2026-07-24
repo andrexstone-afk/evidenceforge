@@ -47,6 +47,11 @@ def test_pubmed_query_rejects_inverted_date_range(pico: PICO) -> None:
         )
 
 
+def test_pubmed_query_requires_both_date_boundaries(pico: PICO) -> None:
+    with pytest.raises(ValueError, match="provided together"):
+        build_pubmed_query(pico, date_from=date(2020, 1, 1))
+
+
 def test_query_builder_removes_embedded_quotes(pico: PICO) -> None:
     modified = pico.model_copy(update={"intervention": 'aflibercept" OR "anything'})
 

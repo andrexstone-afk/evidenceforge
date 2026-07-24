@@ -136,7 +136,7 @@ def _normalize_article(article: Any) -> PubMedRecord:
     if citation is None or article_data is None:
         raise ValueError("PubMed article is missing required citation fields")
     pmid = _required_text(citation.find("PMID"))
-    title = _element_text(article_data.find("ArticleTitle"))
+    title = _required_text(article_data.find("ArticleTitle"))
     journal = _required_text(article_data.find("Journal/Title"))
     publication_types = _texts(article_data.findall("PublicationTypeList/PublicationType"))
     return PubMedRecord(
@@ -153,7 +153,7 @@ def _normalize_article(article: Any) -> PubMedRecord:
         is_retracted="Retracted Publication" in publication_types
         or _has_correction_type(citation, "RetractionIn"),
         is_correction="Published Erratum" in publication_types
-        or _has_correction_type(citation, "ErratumFor", "CorrectedandRepublishedIn"),
+        or _has_correction_type(citation, "ErratumFor", "CorrectedandRepublishedFrom"),
         url=f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/",
     )
 

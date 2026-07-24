@@ -45,6 +45,7 @@ async def test_pico_retrieves_normalizes_and_ranks_both_sources() -> None:
                     "ranibizumab",
                 ],
             ),
+            current_year=2026,
             page_size=2,
         )
     finally:
@@ -53,6 +54,7 @@ async def test_pico_retrieves_normalizes_and_ranks_both_sources() -> None:
 
     assert len(result.pubmed.records) == 2
     assert len(result.clinical_trials.records) == 1
+    assert result.ranking_year == 2026
     assert {item.source for item in result.ranking} == {
         EvidenceSource.PUBMED,
         EvidenceSource.CLINICAL_TRIALS,

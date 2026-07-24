@@ -3,6 +3,8 @@
 import asyncio
 import json
 from collections.abc import Mapping
+from datetime import UTC, datetime
+from email.utils import parsedate_to_datetime
 from time import monotonic
 from typing import Any
 from urllib.parse import urlparse
@@ -86,11 +88,13 @@ class SafeEvidenceClient:
             try:
                 async with self._request_lock:
                     await self._pace_request()
-                    response = await self._client.get(path, params=params)
-                    self._last_request_at = monotonic()
+                    try:
+                        response = await self._client.get(path, params=params)
+                    finally:
+                        self._last_request_at = monotonic()
                 response.raise_for_status()
                 return response
-            except (httpx.TimeoutException, httpx.NetworkError, httpx.HTTPStatusError) as error:
+            except (httpx.TransportError, httpx.HTTPStatusError) as error:
                 if attempt == self._retries or not _is_retryable(error):
                     raise EvidenceClientError("Evidence source request failed") from error
                 retry_after = (
@@ -120,10 +124,22 @@ def _is_retryable(error: httpx.HTTPError) -> bool:
     )
 
 
-def _retry_delay(*, retry_after: str | None, attempt: int) -> float:
+def _retry_delay(
+    *,
+    retry_after: str | None,
+    attempt: int,
+    now: datetime | None = None,
+) -> float:
     if retry_after is not None:
         try:
             return float(min(max(float(retry_after), 0.0), 30.0))
         except ValueError:
-            pass
+            try:
+                retry_at = parsedate_to_datetime(retry_after)
+                if retry_at.tzinfo is None:
+                    retry_at = retry_at.replace(tzinfo=UTC)
+                reference = now or datetime.now(UTC)
+                return float(min(max((retry_at - reference).total_seconds(), 0.0), 30.0))
+            except (TypeError, ValueError, OverflowError):
+                pass
     return 0.25 * (2.0**attempt)

@@ -37,6 +37,11 @@ PUBMED_FETCH_XML = """\
           <PublicationType>Randomized Controlled Trial</PublicationType>
         </PublicationTypeList>
       </Article>
+      <CommentsCorrectionsList>
+        <CommentsCorrections RefType="CorrectedandRepublishedFrom">
+          <RefSource>Synthetic prior record</RefSource>
+        </CommentsCorrections>
+      </CommentsCorrectionsList>
       <MeshHeadingList>
         <MeshHeading><DescriptorName>Macular Degeneration</DescriptorName></MeshHeading>
       </MeshHeadingList>

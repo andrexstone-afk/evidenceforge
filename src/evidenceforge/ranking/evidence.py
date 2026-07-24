@@ -1,7 +1,6 @@
 """Deterministic evidence ranking with inspectable component scores."""
 
 import re
-from datetime import UTC, datetime
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -54,12 +53,13 @@ def rank_evidence(
     records: list[PubMedRecord | ClinicalTrialRecord],
     pico: PICO,
     *,
-    current_year: int | None = None,
+    current_year: int,
 ) -> list[RankedEvidence]:
     """Rank records deterministically while exposing every contributing factor."""
 
-    year = current_year or datetime.now(UTC).year
-    ranked = [_rank_record(record, pico, current_year=year) for record in records]
+    if current_year < 1900 or current_year > 9999:
+        raise ValueError("current_year must be between 1900 and 9999")
+    ranked = [_rank_record(record, pico, current_year=current_year) for record in records]
     return sorted(ranked, key=lambda item: (-item.score, item.source, item.record_id))
 
 

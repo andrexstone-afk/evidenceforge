@@ -13,8 +13,10 @@ to reproduce a search and link every claim to a stable normalized source record.
 
 Use deterministic source-specific query builders, immutable evidence-query and search
 metadata models, one allowlisted async client per source, source-specific normalization,
-and transparent deterministic ranking components. Store partial source dates as strings
-instead of fabricating day-level precision. Treat retrieved text as untrusted data.
+and transparent deterministic ranking components. Callers provide an explicit ranking
+year, which is retained with the result so time-dependent recency scoring is
+reproducible. Store partial source dates as strings instead of fabricating day-level
+precision. Treat retrieved text as untrusted data.
 
 PubMed retrieval uses ESearch followed by a batched XML EFetch and checks that both
 identifier sets match. ClinicalTrials.gov uses API v2 page tokens. Default tests use

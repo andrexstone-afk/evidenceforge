@@ -2,9 +2,9 @@
 
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Annotated
+from typing import Annotated, Self
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 EvidenceText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
@@ -62,6 +62,14 @@ class PubMedRecord(BaseModel):
     is_correction: bool = False
     url: str = Field(pattern=r"^https://pubmed\.ncbi\.nlm\.nih\.gov/\d+/$")
 
+    @model_validator(mode="after")
+    def validate_canonical_url(self) -> Self:
+        """Reject a canonical URL that points at a different PMID."""
+
+        if self.url != f"https://pubmed.ncbi.nlm.nih.gov/{self.pmid}/":
+            raise ValueError("PubMed URL must match PMID")
+        return self
+
     @property
     def record_id(self) -> str:
         """Return the stable source identifier."""
@@ -102,6 +110,14 @@ class ClinicalTrialRecord(BaseModel):
     last_update_date: str | None = None
     has_results: bool = False
     url: str = Field(pattern=r"^https://clinicaltrials\.gov/study/NCT\d{8}$")
+
+    @model_validator(mode="after")
+    def validate_canonical_url(self) -> Self:
+        """Reject a canonical URL that points at a different NCT ID."""
+
+        if self.url != f"https://clinicaltrials.gov/study/{self.nct_id}":
+            raise ValueError("ClinicalTrials.gov URL must match NCT ID")
+        return self
 
     @property
     def record_id(self) -> str:

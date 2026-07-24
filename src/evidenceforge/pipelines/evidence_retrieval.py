@@ -3,7 +3,7 @@
 import asyncio
 from typing import Protocol
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from evidenceforge.models.evidence import (
     ClinicalTrialRecord,
@@ -46,6 +46,7 @@ class EvidenceRetrievalResult(BaseModel):
     pubmed: EvidencePage[PubMedRecord]
     clinical_trials: EvidencePage[ClinicalTrialRecord]
     ranking: list[RankedEvidence]
+    ranking_year: int = Field(ge=1900, le=9999)
 
 
 class EvidenceRetrievalPipeline:
@@ -60,7 +61,13 @@ class EvidenceRetrievalPipeline:
         self._pubmed = pubmed
         self._clinical_trials = clinical_trials
 
-    async def run(self, pico: PICO, *, page_size: int = 20) -> EvidenceRetrievalResult:
+    async def run(
+        self,
+        pico: PICO,
+        *,
+        current_year: int,
+        page_size: int = 20,
+    ) -> EvidenceRetrievalResult:
         """Execute a reproducible first-page retrieval for a validated PICO."""
 
         pubmed_query = build_pubmed_query(pico, page_size=page_size)
@@ -72,5 +79,10 @@ class EvidenceRetrievalPipeline:
         return EvidenceRetrievalResult(
             pubmed=pubmed_page,
             clinical_trials=trial_page,
-            ranking=rank_evidence([*pubmed_page.records, *trial_page.records], pico),
+            ranking=rank_evidence(
+                [*pubmed_page.records, *trial_page.records],
+                pico,
+                current_year=current_year,
+            ),
+            ranking_year=current_year,
         )

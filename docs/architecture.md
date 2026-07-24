@@ -24,9 +24,9 @@ An application factory keeps tests isolated and avoids hidden startup work.
 flowchart LR
     P[PICO] --> Q[Deterministic query builders]
     Q --> M[Inspectible EvidenceQuery]
-    M --> P[Provider-neutral retrieval pipeline]
-    P --> PM[Allowlisted PubMed client]
-    P --> CT[Allowlisted ClinicalTrials.gov v2 client]
+    M --> RP[Provider-neutral retrieval pipeline]
+    RP --> PM[Allowlisted PubMed client]
+    RP --> CT[Allowlisted ClinicalTrials.gov v2 client]
     PM --> N[Normalized evidence records]
     CT --> N
     N --> R[Transparent heuristic ranking]
@@ -37,3 +37,4 @@ Query construction is deterministic and has no hidden network access. Source cli
 own vendor response validation and normalization. Downstream stages consume only
 normalized records and retained search metadata. Ranking is explicitly labeled as an
 unvalidated retrieval heuristic; it does not claim to be a clinical evidence hierarchy.
+Its caller-supplied reference year is retained with the result for reproducibility.

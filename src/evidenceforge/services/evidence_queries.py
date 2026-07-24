@@ -24,9 +24,11 @@ def build_pubmed_query(
     if pico.outcomes:
         concepts.append(f"({' OR '.join(_pubmed_phrase(item) for item in pico.outcomes)})")
     filters: dict[str, str] = {}
-    if date_from or date_to:
-        start = (date_from or date(1900, 1, 1)).strftime("%Y/%m/%d")
-        end = (date_to or date.today()).strftime("%Y/%m/%d")
+    if (date_from is None) != (date_to is None):
+        raise ValueError("date_from and date_to must be provided together")
+    if date_from is not None and date_to is not None:
+        start = date_from.strftime("%Y/%m/%d")
+        end = date_to.strftime("%Y/%m/%d")
         if start > end:
             raise ValueError("date_from must not be after date_to")
         filters["publication_date"] = f"{start}:{end}"

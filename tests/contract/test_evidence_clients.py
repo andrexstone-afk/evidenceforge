@@ -1,8 +1,12 @@
+from datetime import UTC, datetime, timedelta
+from email.utils import format_datetime
+from time import monotonic
+
 import httpx
 import pytest
 
 from evidenceforge.clients.evidence import ClinicalTrialsClient, PubMedClient
-from evidenceforge.clients.evidence.base import EvidenceClientError
+from evidenceforge.clients.evidence.base import EvidenceClientError, _retry_delay
 from evidenceforge.models.evidence import EvidenceQuery, EvidenceSource
 from tests.fixtures.evidence import (
     CLINICAL_TRIALS_RESPONSE,
@@ -41,6 +45,7 @@ async def test_pubmed_search_fetch_contract_and_request_identity() -> None:
     assert [record.pmid for record in page.records] == ["11111111", "22222222"]
     assert page.records[0].authors == ["Ada Example", "Fixture Study Group"]
     assert page.records[0].doi == "10.0000/synthetic.1"
+    assert page.records[0].is_correction is True
     assert page.records[0].abstract == (
         "BACKGROUND: Synthetic fixture background.\nRESULTS: No clinical conclusion is asserted."
     )
@@ -115,6 +120,83 @@ async def test_clinical_trials_retries_rate_limit_then_succeeds() -> None:
         await client.aclose()
 
     assert attempts == 2
+
+
+@pytest.mark.asyncio
+async def test_failed_response_is_paced_before_retry() -> None:
+    request_times: list[float] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        request_times.append(monotonic())
+        if len(request_times) == 1:
+            return httpx.Response(500, headers={"Retry-After": "0"})
+        return httpx.Response(200, json=CLINICAL_TRIALS_RESPONSE)
+
+    client = ClinicalTrialsClient(
+        transport=httpx.MockTransport(handler),
+        min_interval_seconds=0.05,
+        retries=1,
+    )
+    try:
+        await client.search(
+            EvidenceQuery(
+                source=EvidenceSource.CLINICAL_TRIALS,
+                query="synthetic",
+                page_size=1,
+            )
+        )
+    finally:
+        await client.aclose()
+
+    assert request_times[1] - request_times[0] >= 0.045
+
+
+@pytest.mark.asyncio
+async def test_remote_protocol_failure_is_retried() -> None:
+    attempts = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise httpx.RemoteProtocolError("synthetic protocol failure", request=request)
+        return httpx.Response(200, json=CLINICAL_TRIALS_RESPONSE)
+
+    client = ClinicalTrialsClient(
+        transport=httpx.MockTransport(handler),
+        min_interval_seconds=0,
+        retries=1,
+    )
+    try:
+        await client.search(
+            EvidenceQuery(
+                source=EvidenceSource.CLINICAL_TRIALS,
+                query="synthetic",
+                page_size=1,
+            )
+        )
+    finally:
+        await client.aclose()
+
+    assert attempts == 2
+
+
+def test_retry_after_supports_http_date_and_cap() -> None:
+    now = datetime(2026, 7, 24, 12, 0, tzinfo=UTC)
+
+    ten_seconds = _retry_delay(
+        retry_after=format_datetime(now + timedelta(seconds=10), usegmt=True),
+        attempt=0,
+        now=now,
+    )
+    capped = _retry_delay(
+        retry_after=format_datetime(now + timedelta(seconds=45), usegmt=True),
+        attempt=0,
+        now=now,
+    )
+
+    assert ten_seconds == 10
+    assert capped == 30
 
 
 def test_evidence_clients_reject_non_allowlisted_hosts() -> None:

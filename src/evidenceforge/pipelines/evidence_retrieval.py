@@ -70,6 +70,8 @@ class EvidenceRetrievalPipeline:
     ) -> EvidenceRetrievalResult:
         """Execute a reproducible first-page retrieval for a validated PICO."""
 
+        if current_year < 1900 or current_year > 9999:
+            raise ValueError("current_year must be between 1900 and 9999")
         pubmed_query = build_pubmed_query(pico, page_size=page_size)
         trial_query = build_trial_query(pico, page_size=page_size)
         pubmed_page, trial_page = await asyncio.gather(

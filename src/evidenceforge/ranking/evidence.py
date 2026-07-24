@@ -139,7 +139,9 @@ def _rank_record(
 
 
 def _tokens(value: str) -> set[str]:
-    return {token for token in re.findall(r"[a-z0-9]+", value.lower()) if len(token) > 2}
+    tokens = re.findall(r"[a-z0-9]+(?:[-/][a-z0-9]+)*", value.lower())
+    normalized = (token.replace("-", "").replace("/", "") for token in tokens)
+    return {token for token in normalized if len(token) > 2}
 
 
 def _leading_year(value: str | None) -> int | None:

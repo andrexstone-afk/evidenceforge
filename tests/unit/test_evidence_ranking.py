@@ -1,6 +1,7 @@
 from evidenceforge.models.evidence import ClinicalTrialRecord, PubMedRecord
 from evidenceforge.models.pico import PICO
 from evidenceforge.ranking import rank_evidence
+from evidenceforge.ranking.evidence import _tokens
 
 
 def _pico() -> PICO:
@@ -58,3 +59,7 @@ def test_trial_ranking_records_status_and_results_factors() -> None:
 
     assert ranked[0].components.design_or_status == 1.5
     assert ranked[0].components.evidence_availability == 1.0
+
+
+def test_biomedical_hyphen_and_slash_tokens_normalize_consistently() -> None:
+    assert _tokens("IL-6 IL/6") == {"il6"}

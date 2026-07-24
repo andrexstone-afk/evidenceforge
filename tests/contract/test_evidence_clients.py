@@ -199,6 +199,11 @@ def test_retry_after_supports_http_date_and_cap() -> None:
     assert capped == 30
 
 
+@pytest.mark.parametrize("value", ["nan", "inf", "-inf"])
+def test_retry_after_non_finite_seconds_use_backoff(value: str) -> None:
+    assert _retry_delay(retry_after=value, attempt=1) == 0.5
+
+
 def test_evidence_clients_reject_non_allowlisted_hosts() -> None:
     with pytest.raises(ValueError, match=r"eutils\.ncbi\.nlm\.nih\.gov"):
         PubMedClient(
@@ -207,6 +212,13 @@ def test_evidence_clients_reject_non_allowlisted_hosts() -> None:
         )
     with pytest.raises(ValueError, match=r"clinicaltrials\.gov"):
         ClinicalTrialsClient(base_url="https://example.com/api/v2/")
+    with pytest.raises(ValueError, match=r"eutils\.ncbi\.nlm\.nih\.gov"):
+        PubMedClient(
+            email="maintainer@example.com",
+            base_url="http://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
+        )
+    with pytest.raises(ValueError, match=r"clinicaltrials\.gov"):
+        ClinicalTrialsClient(base_url="http://clinicaltrials.gov/api/v2/")
 
 
 @pytest.mark.asyncio
@@ -262,6 +274,31 @@ async def test_evidence_client_malformed_json_uses_domain_error() -> None:
                 200,
                 content=b"not-json",
                 headers={"content-type": "application/json"},
+            )
+        ),
+        min_interval_seconds=0,
+    )
+    try:
+        with pytest.raises(EvidenceClientError, match="malformed JSON"):
+            await client.search(
+                EvidenceQuery(
+                    source=EvidenceSource.CLINICAL_TRIALS,
+                    query="synthetic",
+                    page_size=1,
+                )
+            )
+    finally:
+        await client.aclose()
+
+
+@pytest.mark.asyncio
+async def test_evidence_client_invalid_json_encoding_uses_domain_error() -> None:
+    client = ClinicalTrialsClient(
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(
+                200,
+                content=b"\xff\xfe\xff",
+                headers={"content-type": "application/json; charset=utf-8"},
             )
         ),
         min_interval_seconds=0,

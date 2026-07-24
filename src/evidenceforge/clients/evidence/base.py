@@ -5,6 +5,7 @@ import json
 from collections.abc import Mapping
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
+from math import isfinite
 from time import monotonic
 from typing import Any
 from urllib.parse import urlparse
@@ -64,7 +65,7 @@ class SafeEvidenceClient:
         response = await self._request(path, params=params)
         try:
             return response.json()
-        except json.JSONDecodeError as error:
+        except (json.JSONDecodeError, UnicodeDecodeError) as error:
             raise EvidenceClientError("Evidence source returned malformed JSON") from error
 
     async def _get_text(
@@ -132,7 +133,10 @@ def _retry_delay(
 ) -> float:
     if retry_after is not None:
         try:
-            return float(min(max(float(retry_after), 0.0), 30.0))
+            numeric_delay = float(retry_after)
+            if not isfinite(numeric_delay):
+                raise ValueError("Retry-After seconds must be finite")
+            return float(min(max(numeric_delay, 0.0), 30.0))
         except ValueError:
             try:
                 retry_at = parsedate_to_datetime(retry_after)

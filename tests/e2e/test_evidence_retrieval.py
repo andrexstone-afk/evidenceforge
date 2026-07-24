@@ -60,3 +60,36 @@ async def test_pico_retrieves_normalizes_and_ranks_both_sources() -> None:
         EvidenceSource.CLINICAL_TRIALS,
     }
     assert result.ranking[-1].record_id == "22222222"
+
+
+@pytest.mark.asyncio
+async def test_invalid_ranking_year_fails_before_source_requests() -> None:
+    def unexpected_request(request: httpx.Request) -> httpx.Response:
+        pytest.fail(f"unexpected external request: {request.url}")
+
+    pubmed = PubMedClient(
+        email="maintainer@example.com",
+        transport=httpx.MockTransport(unexpected_request),
+        min_interval_seconds=0,
+    )
+    trials = ClinicalTrialsClient(
+        transport=httpx.MockTransport(unexpected_request),
+        min_interval_seconds=0,
+    )
+    pipeline = EvidenceRetrievalPipeline(pubmed=pubmed, clinical_trials=trials)
+    try:
+        with pytest.raises(ValueError, match="current_year"):
+            await pipeline.run(
+                PICO(
+                    population="synthetic population",
+                    condition="synthetic condition",
+                    intervention="synthetic intervention",
+                    comparator="synthetic comparator",
+                    outcomes=["synthetic outcome"],
+                    normalized_search_terms=["synthetic"],
+                ),
+                current_year=1899,
+            )
+    finally:
+        await pubmed.aclose()
+        await trials.aclose()

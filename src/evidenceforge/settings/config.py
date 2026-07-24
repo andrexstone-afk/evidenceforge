@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-5.6-sol"
     openai_reasoning_enabled: bool = True
     openai_reasoning_effort: Literal["none", "low", "medium", "high", "xhigh", "max"] = "low"
+    ncbi_email: str | None = None
+    ncbi_api_key: SecretStr | None = Field(default=None, repr=False)
     request_timeout_seconds: float = Field(default=10.0, gt=0, le=60)
     request_retries: int = Field(default=2, ge=0, le=5)
 

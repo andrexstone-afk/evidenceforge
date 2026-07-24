@@ -10,10 +10,13 @@ synthesis visible rather than presenting an opaque answer.
 
 ## Project status
 
-**Phase 1 — Coded-brief MVP in progress.** The package can parse the documented AMD
+**Phase 2 — Evidence retrieval in progress.** Phase 1 is complete: the package can parse the documented AMD
 question through a deterministic mock provider, retrieve live ICD-10-CM and RxNorm
-candidates, preserve alternatives, and export validated Markdown. Evidence retrieval,
-synthesis, and claim-level QA are not implemented yet.
+candidates, preserve alternatives, and export validated Markdown. Phase 2 now has
+typed PubMed and ClinicalTrials.gov v2 records, reproducible query builders,
+source-isolated async clients, retained search metadata, and transparent heuristic
+ranking. Integration into the end-to-end brief, synthesis, and claim-level QA remains
+future work.
 
 ## Planned pipeline
 
@@ -78,11 +81,19 @@ The CLI requires an explicit `--confirm-no-phi` declaration and applies a limite
 identifier-pattern screen before any external call. This is defense in depth, not a
 guarantee that free text is de-identified. Never enter patient data.
 
+PubMed requests require `EVIDENCEFORGE_NCBI_EMAIL` so the client can send NCBI's
+required maintainer contact parameter. `EVIDENCEFORGE_NCBI_API_KEY` is optional. Live
+evidence checks are opt-in:
+
+```bash
+EVIDENCEFORGE_RUN_LIVE_INTEGRATION=1 uv run pytest tests/integration
+```
+
 ## Architecture and safety
 
 The package uses an application factory, typed environment settings, and separate API,
-CLI, and configuration boundaries. Future terminology and evidence clients will be
-async, allowlisted, and replaceable. See [architecture](docs/architecture.md),
+CLI, and configuration boundaries. Terminology and evidence clients are async,
+allowlisted, and replaceable. See [architecture](docs/architecture.md),
 [safety](docs/safety.md), and [security policy](SECURITY.md).
 
 ## Roadmap

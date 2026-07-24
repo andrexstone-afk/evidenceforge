@@ -3,7 +3,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,6 +22,13 @@ class Settings(BaseSettings):
     service_name: str = "evidenceforge"
     api_host: str = "127.0.0.1"
     api_port: int = Field(default=8000, ge=1, le=65535)
+    llm_provider: Literal["mock", "openai"] = "mock"
+    openai_api_key: SecretStr | None = Field(default=None, repr=False)
+    openai_model: str = "gpt-5.6-sol"
+    openai_reasoning_enabled: bool = True
+    openai_reasoning_effort: Literal["none", "low", "medium", "high", "xhigh", "max"] = "low"
+    request_timeout_seconds: float = Field(default=10.0, gt=0, le=60)
+    request_retries: int = Field(default=2, ge=0, le=5)
 
 
 @lru_cache

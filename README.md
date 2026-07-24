@@ -10,13 +10,12 @@ synthesis visible rather than presenting an opaque answer.
 
 ## Project status
 
-**Phase 2 — Evidence retrieval in progress.** Phase 1 is complete: the package can parse the documented AMD
-question through a deterministic mock provider, retrieve live ICD-10-CM and RxNorm
-candidates, preserve alternatives, and export validated Markdown. Phase 2 now has
-typed PubMed and ClinicalTrials.gov v2 records, reproducible query builders,
-source-isolated async clients, retained search metadata, and transparent heuristic
-ranking. Integration into the end-to-end brief, synthesis, and claim-level QA remains
-future work.
+**Phase 3 — Synthesis and claim-level QA in progress.** The package has the Phase 1
+question-to-coded-Markdown slice and the Phase 2 PubMed/ClinicalTrials.gov v2 retrieval
+boundary. Phase 3 now adds a provider-neutral service for structured synthesis,
+claim-source linking, deterministic consistency checks, independent review, auditable
+revision, and re-review. High-severity issues cannot auto-pass. Integrating and
+persisting Phase 3 artifacts through the existing CLI/API surfaces remains future work.
 
 ## Planned pipeline
 
@@ -94,13 +93,16 @@ EVIDENCEFORGE_RUN_LIVE_INTEGRATION=1 uv run pytest tests/integration
 The package uses an application factory, typed environment settings, and separate API,
 CLI, and configuration boundaries. Terminology and evidence clients are async,
 allowlisted, and replaceable. See [architecture](docs/architecture.md),
-[safety](docs/safety.md), and [security policy](SECURITY.md).
+[claim-level QA design](docs/qa-design.md), [safety](docs/safety.md), and
+[security policy](SECURITY.md).
 
 ## Roadmap
 
-- Phase 1: CLI question → PICO → live ICD-10-CM/RxNorm mapping → validated Markdown
-- Phase 2: PubMed and ClinicalTrials.gov v2 retrieval and transparent ranking
-- Phase 3: structured synthesis, claim-source linking, QA, and revision
+- Phase 1: complete — CLI question → PICO → live ICD-10-CM/RxNorm mapping → validated
+  Markdown
+- Phase 2: complete — PubMed and ClinicalTrials.gov v2 retrieval and transparent
+  ranking
+- Phase 3: in progress — structured synthesis, claim-source linking, QA, and revision
 - Phase 4: normalized persistence and stable API contracts
 - Phase 5+: exports, interface, evaluation, and portfolio release
 

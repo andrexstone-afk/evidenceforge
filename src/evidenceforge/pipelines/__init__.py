@@ -5,5 +5,11 @@ from evidenceforge.pipelines.evidence_retrieval import (
     EvidenceRetrievalPipeline,
     EvidenceRetrievalResult,
 )
+from evidenceforge.pipelines.synthesis_qa import SynthesisQAPipeline
 
-__all__ = ["CodedBriefPipeline", "EvidenceRetrievalPipeline", "EvidenceRetrievalResult"]
+__all__ = [
+    "CodedBriefPipeline",
+    "EvidenceRetrievalPipeline",
+    "EvidenceRetrievalResult",
+    "SynthesisQAPipeline",
+]

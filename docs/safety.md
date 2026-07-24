@@ -11,6 +11,15 @@ OpenAI Responses requests explicitly disable server-side response storage with
 `store=false`; this does not make PHI input permissible.
 
 Ontology codes must come from terminology services, and medical claims must remain
-traceable to retrieved evidence. Model-generated
-synthesis, inference, uncertainty, conflicting evidence, and missing evidence must be
-distinguished explicitly. High-severity QA findings will block an automatic pass.
+traceable to retrieved evidence. Model-generated synthesis, inference, uncertainty,
+conflicting evidence, and missing evidence must be distinguished explicitly.
+
+Retrieved text and generated drafts are treated as untrusted prompt data. The
+claim-level QA service requires retrieved source IDs and source-preserving passages,
+checks reviewer citations against normalized evidence, and combines independent review
+with deterministic numeric, study-design, trial-status, outcome-role, and causal-language
+checks. Status is derived in code. High-severity explicit-claim or untracked-narrative
+findings block automatic passage, including after revision.
+
+These controls detect defined consistency failures; they do not clinically validate a
+brief or replace expert assessment. Current QA fixtures are synthetic.

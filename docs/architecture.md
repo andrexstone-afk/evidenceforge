@@ -38,3 +38,32 @@ own vendor response validation and normalization. Downstream stages consume only
 normalized records and retained search metadata. Ranking is explicitly labeled as an
 unvalidated retrieval heuristic; it does not claim to be a clinical evidence hierarchy.
 Its caller-supplied reference year is retained with the result for reproducibility.
+
+## Synthesis and claim-level QA boundary
+
+```mermaid
+flowchart LR
+    R[Ranked normalized evidence] --> S[Synthesis provider]
+    S --> D[Original structured draft]
+    D --> C[Deterministic consistency checks]
+    D --> Q[Independent QA provider]
+    R --> C
+    R --> Q
+    C --> G[Code-derived QA status]
+    Q --> G
+    G -->|non-passing| V[Revision provider]
+    V --> A[Revision plus exact claim change log]
+    A --> C2[Deterministic re-check]
+    A --> Q2[Independent re-review]
+    G -->|passing| F[Passing final artifact]
+    C2 --> G2[Code-derived post-revision status]
+    Q2 --> G2
+    G2 -->|passing| F
+    G2 -->|needs revision or blocked| B[Returned artifact marked non-passing]
+```
+
+The provider calls share a protocol but are separate injected dependencies. Structured
+Pydantic models reject malformed outputs, and code—not a model—derives pass, revision,
+or blocked status. All versions remain immutable. Questions, evidence, drafts, and QA
+findings are serialized as untrusted user-prompt data and never inserted into
+system-prompt authority. See [Claim-level synthesis and QA](qa-design.md).

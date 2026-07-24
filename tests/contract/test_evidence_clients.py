@@ -86,6 +86,9 @@ async def test_clinical_trials_v2_contract_and_pagination() -> None:
     assert page.records[0].enrollment == 120
     assert page.records[0].interventions == ["Aflibercept", "Ranibizumab"]
     assert page.records[0].outcomes == ["Change in visual acuity", "Adverse events"]
+    assert page.records[0].primary_outcomes == ["Change in visual acuity"]
+    assert page.records[0].secondary_outcomes == ["Adverse events"]
+    assert page.records[0].allocation == "RANDOMIZED"
     assert captured is not None
     assert captured.url.path == "/api/v2/studies"
     assert captured.url.params["filter.overallStatus"] == "RECRUITING|COMPLETED"

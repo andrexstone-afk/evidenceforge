@@ -1,7 +1,8 @@
 ---
 brief_type: coded-clinical-question
-question: "In adults with neovascular age-related macular degeneration, how does aflibercept compare with ranibizumab for improving visual acuity?"
-generated_at: 2026-07-24T20:50:07.884216+00:00
+question: In adults with neovascular age-related macular degeneration, how does aflibercept
+  compare with ranibizumab for improving visual acuity?
+generated_at: '2026-07-24T21:06:41.674025+00:00'
 prompt_version: pico-v1
 llm_provider: mock
 llm_model: deterministic-amd-fixture-v1
@@ -68,7 +69,7 @@ This Phase 1 artifact structures the question and validates terminology mappings
 
 - Provider: mock
 - Model: deterministic-amd-fixture-v1
-- Latency: 0.25 ms
+- Latency: 2.00 ms
 - Input tokens: not reported
 - Output tokens: not reported
 - Retry count: 0

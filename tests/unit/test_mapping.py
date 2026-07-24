@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from evidenceforge.models import OntologyCandidate, OntologyName
+from evidenceforge.models import Mapping, OntologyCandidate, OntologyName
 from evidenceforge.pipelines.coded_brief import _condition_mapping, _drug_mapping
 from tests.fixtures.terminology import ICD_RESPONSE
 
@@ -64,4 +64,31 @@ def test_ontology_candidate_rejects_invalid_identifier(
             preferred_label="invalid",
             source_url="https://clinicaltables.nlm.nih.gov",
             source_rank=1,
+        )
+
+
+def test_icd_candidate_accepts_alphanumeric_third_character() -> None:
+    candidate = OntologyCandidate(
+        ontology=OntologyName.ICD10CM,
+        code="M1A.9XX0",
+        preferred_label="Chronic gout, unspecified",
+        source_url="https://clinicaltables.nlm.nih.gov",
+        source_rank=1,
+    )
+
+    assert candidate.code == "M1A.9XX0"
+
+
+def test_mapping_rejects_selected_candidate_outside_candidates() -> None:
+    selected, other = _icd_candidates()[:2]
+
+    with pytest.raises(ValidationError, match="present in candidates"):
+        Mapping(
+            original_term="AMD",
+            normalized_term="amd",
+            ontology=OntologyName.ICD10CM,
+            selected=selected,
+            candidates=[other],
+            match_method="test",
+            human_review_required=False,
         )

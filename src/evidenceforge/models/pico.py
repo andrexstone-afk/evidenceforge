@@ -1,6 +1,10 @@
 """PICO extraction models."""
 
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Annotated
+
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+
+NonBlankText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
 
 class PICO(BaseModel):
@@ -8,13 +12,13 @@ class PICO(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    population: str = Field(min_length=1)
-    condition: str = Field(min_length=1)
-    intervention: str = Field(min_length=1)
-    comparator: str = Field(min_length=1)
-    outcomes: list[str] = Field(min_length=1)
-    time_horizon: str | None = None
-    study_context: str | None = None
-    ambiguities: list[str] = Field(default_factory=list)
-    missing_information: list[str] = Field(default_factory=list)
-    normalized_search_terms: list[str] = Field(min_length=1)
+    population: NonBlankText
+    condition: NonBlankText
+    intervention: NonBlankText
+    comparator: NonBlankText
+    outcomes: list[NonBlankText] = Field(min_length=1)
+    time_horizon: NonBlankText | None = None
+    study_context: NonBlankText | None = None
+    ambiguities: list[NonBlankText] = Field(default_factory=list)
+    missing_information: list[NonBlankText] = Field(default_factory=list)
+    normalized_search_terms: list[NonBlankText] = Field(min_length=1)

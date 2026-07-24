@@ -70,7 +70,9 @@ tests; it is not a general clinical parser.
 
 The default suite contract-tests the OpenAI request/structured-response boundary without
 a paid call. Run a credentialed integration smoke test separately before claiming a
-specific model is operational in a deployment.
+specific model is operational in a deployment. Set
+`EVIDENCEFORGE_OPENAI_REASONING_ENABLED=false` for models that do not accept reasoning
+options; otherwise choose a supported `EVIDENCEFORGE_OPENAI_REASONING_EFFORT`.
 
 The CLI requires an explicit `--confirm-no-phi` declaration and applies a limited
 identifier-pattern screen before any external call. This is defense in depth, not a

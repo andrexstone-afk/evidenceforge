@@ -1,17 +1,25 @@
 """Validated Markdown export."""
 
+import yaml
+
 from evidenceforge.models import CodedBrief
 
 
 def render_markdown(brief: CodedBrief) -> str:
+    frontmatter = yaml.safe_dump(
+        {
+            "brief_type": "coded-clinical-question",
+            "question": brief.question,
+            "generated_at": brief.generated_at.isoformat(),
+            "prompt_version": brief.prompt_version,
+            "llm_provider": brief.llm_run.provider,
+            "llm_model": brief.llm_run.model,
+        },
+        sort_keys=False,
+    ).strip()
     lines = [
         "---",
-        "brief_type: coded-clinical-question",
-        f'question: "{brief.question.replace(chr(34), chr(39))}"',
-        f"generated_at: {brief.generated_at.isoformat()}",
-        f"prompt_version: {brief.prompt_version}",
-        f"llm_provider: {brief.llm_run.provider}",
-        f"llm_model: {brief.llm_run.model}",
+        *frontmatter.splitlines(),
         "---",
         "",
         "# EvidenceForge coded brief",

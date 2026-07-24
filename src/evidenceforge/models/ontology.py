@@ -24,7 +24,7 @@ class OntologyCandidate(BaseModel):
     @model_validator(mode="after")
     def validate_code_format(self) -> "OntologyCandidate":
         if self.ontology is OntologyName.ICD10CM:
-            if not re.fullmatch(r"[A-Z]\d{2}(?:\.[A-Z0-9]{1,4})?", self.code):
+            if not re.fullmatch(r"[A-Z]\d[A-Z0-9](?:\.[A-Z0-9]{1,4})?", self.code):
                 raise ValueError("Invalid ICD-10-CM code format")
         elif not self.code.isdigit():
             raise ValueError("Invalid RxNorm RXCUI format")
@@ -42,3 +42,9 @@ class Mapping(BaseModel):
     match_method: str
     human_review_required: bool
     review_reason: str | None = None
+
+    @model_validator(mode="after")
+    def validate_selected_in_candidates(self) -> "Mapping":
+        if self.selected is not None and self.selected not in self.candidates:
+            raise ValueError("Selected candidate must be present in candidates")
+        return self

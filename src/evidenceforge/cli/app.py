@@ -9,6 +9,7 @@ import uvicorn
 
 from evidenceforge import __version__
 from evidenceforge.clients.terminology import ICD10CMClient, RxNormClient
+from evidenceforge.clients.terminology.base import TerminologyClientError
 from evidenceforge.exporters import render_markdown
 from evidenceforge.llm import LLMProvider, MockLLMProvider, OpenAIProvider
 from evidenceforge.pipelines import CodedBriefPipeline
@@ -71,7 +72,10 @@ def create_brief(
         raise typer.BadParameter("--confirm-no-phi is required")
     if output is not None and output.exists() and not force:
         raise typer.BadParameter(f"Output already exists: {output}; pass --force to replace it")
-    asyncio.run(_create_brief(question=question, output=output))
+    try:
+        asyncio.run(_create_brief(question=question, output=output))
+    except (TerminologyClientError, ValueError) as error:
+        raise typer.BadParameter(str(error)) from error
 
 
 async def _create_brief(*, question: str, output: Path | None) -> None:
@@ -87,6 +91,9 @@ async def _create_brief(*, question: str, output: Path | None) -> None:
             model=settings.openai_model,
             timeout_seconds=settings.request_timeout_seconds,
             retries=settings.request_retries,
+            reasoning_effort=(
+                settings.openai_reasoning_effort if settings.openai_reasoning_enabled else None
+            ),
         )
     else:
         provider = MockLLMProvider()
@@ -108,12 +115,13 @@ async def _create_brief(*, question: str, output: Path | None) -> None:
     finally:
         await icd10.aclose()
         await rxnorm.aclose()
+        await provider.aclose()
 
     markdown = render_markdown(brief)
     if output is None:
         typer.echo(markdown)
     else:
-        output.write_text(markdown)
+        output.write_text(markdown, encoding="utf-8")
         typer.echo(f"Wrote {output}")
 
 

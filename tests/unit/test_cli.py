@@ -64,5 +64,23 @@ def test_cli_does_not_overwrite_without_force(tmp_path: Path) -> None:
     assert output.read_text() == "preserve me"
 
 
+def test_cli_formats_pipeline_validation_errors_without_traceback() -> None:
+    result = CliRunner().invoke(
+        app,
+        [
+            "brief",
+            "create",
+            "--question",
+            "too short",
+            "--confirm-no-phi",
+        ],
+    )
+    output = _plain_output(result.output)
+
+    assert result.exit_code != 0
+    assert "at least 10 characters" in output
+    assert "Traceback" not in output
+
+
 def _plain_output(value: str) -> str:
     return " ".join(unstyle(value).split())

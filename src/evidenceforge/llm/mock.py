@@ -43,6 +43,9 @@ class MockLLMProvider:
         )
         return response
 
+    async def aclose(self) -> None:
+        """No-op lifecycle hook matching network-backed providers."""
+
 
 def amd_pico() -> PICO:
     return PICO(

@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     llm_provider: Literal["mock", "openai"] = "mock"
     openai_api_key: SecretStr | None = Field(default=None, repr=False)
     openai_model: str = "gpt-5.6-sol"
+    openai_reasoning_enabled: bool = True
+    openai_reasoning_effort: Literal["none", "low", "medium", "high", "xhigh", "max"] = "low"
     request_timeout_seconds: float = Field(default=10.0, gt=0, le=60)
     request_retries: int = Field(default=2, ge=0, le=5)
 

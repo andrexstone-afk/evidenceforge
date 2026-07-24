@@ -16,7 +16,7 @@ def load_pico_prompt() -> str:
     """Load the versioned prompt from a checkout or an installed wheel."""
 
     if SOURCE_PROMPT_PATH.exists():
-        return SOURCE_PROMPT_PATH.read_text()
+        return SOURCE_PROMPT_PATH.read_text(encoding="utf-8")
     return files("evidenceforge").joinpath("prompts/pico/v1.md").read_text()
 
 

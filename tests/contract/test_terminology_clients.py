@@ -77,6 +77,18 @@ async def test_malformed_json_uses_domain_error() -> None:
         await client.aclose()
 
 
+@pytest.mark.asyncio
+async def test_invalid_icd_candidate_uses_domain_error() -> None:
+    payload = [1, ["bad-code"], None, [["bad-code", "Invalid"]]]
+    transport = httpx.MockTransport(lambda request: httpx.Response(200, json=payload))
+    client = ICD10CMClient(transport=transport)
+    try:
+        with pytest.raises(TerminologyClientError, match="candidate data"):
+            await client.search("invalid")
+    finally:
+        await client.aclose()
+
+
 def test_clients_validate_retry_bounds() -> None:
     with pytest.raises(ValueError, match="Retries"):
         RxNormClient(retries=6)

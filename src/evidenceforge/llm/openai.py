@@ -2,6 +2,7 @@
 
 import asyncio
 from time import perf_counter
+from typing import Literal
 
 from openai import (
     APIConnectionError,
@@ -25,7 +26,10 @@ class OpenAIProvider:
         model: str,
         timeout_seconds: float = 30.0,
         retries: int = 2,
+        reasoning_effort: Literal["none", "low", "medium", "high", "xhigh", "max"] | None = "low",
     ) -> None:
+        if retries < 0 or retries > 5:
+            raise ValueError("Retries must be between 0 and 5")
         self._client = AsyncOpenAI(
             api_key=api_key,
             timeout=timeout_seconds,
@@ -33,6 +37,7 @@ class OpenAIProvider:
         )
         self._model = model
         self._retries = retries
+        self._reasoning_effort = reasoning_effort
         self._last_run_metadata: LLMRunMetadata | None = None
 
     @property
@@ -50,13 +55,23 @@ class OpenAIProvider:
         response = None
         for attempt in range(self._retries + 1):
             try:
-                response = await self._client.responses.parse(
-                    model=self._model,
-                    instructions=system_prompt,
-                    input=user_prompt,
-                    text_format=response_model,
-                    reasoning={"effort": "low"},
-                )
+                if self._reasoning_effort is None:
+                    response = await self._client.responses.parse(
+                        model=self._model,
+                        instructions=system_prompt,
+                        input=user_prompt,
+                        text_format=response_model,
+                        store=False,
+                    )
+                else:
+                    response = await self._client.responses.parse(
+                        model=self._model,
+                        instructions=system_prompt,
+                        input=user_prompt,
+                        text_format=response_model,
+                        reasoning={"effort": self._reasoning_effort},
+                        store=False,
+                    )
                 break
             except (APIConnectionError, APITimeoutError, InternalServerError, RateLimitError):
                 if attempt == self._retries:
@@ -77,3 +92,8 @@ class OpenAIProvider:
             retry_count=attempt,
         )
         return parsed
+
+    async def aclose(self) -> None:
+        """Release the SDK's underlying HTTP connections."""
+
+        await self._client.close()

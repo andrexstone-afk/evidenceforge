@@ -7,6 +7,8 @@ individualized treatment recommendations.
 The project prohibits PHI input. The CLI requires an explicit no-PHI declaration and
 screens for common identifier patterns before external calls, but automated screening
 cannot guarantee de-identification. Users must provide population-level questions only.
+OpenAI Responses requests explicitly disable server-side response storage with
+`store=false`; this does not make PHI input permissible.
 
 Ontology codes must come from terminology services, and medical claims must remain
 traceable to retrieved evidence. Model-generated

@@ -1,0 +1,24 @@
+name: Feature
+description: Propose a focused vertical slice
+title: "feat: "
+labels: ["feature"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+    validations:
+      required: true
+  - type: textarea
+    id: safety
+    attributes:
+      label: Clinical safety and data implications
+      description: Use synthetic examples only. Do not include PHI, credentials, or secrets.
+    validations:
+      required: true

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from click import unstyle
 from typer.testing import CliRunner
 
 from evidenceforge.cli.app import app
@@ -38,7 +39,7 @@ def test_cli_requires_no_phi_confirmation() -> None:
     )
 
     assert result.exit_code != 0
-    assert "--confirm-no-phi is required" in result.output
+    assert "--confirm-no-phi is required" in _plain_output(result.output)
 
 
 def test_cli_does_not_overwrite_without_force(tmp_path: Path) -> None:
@@ -59,5 +60,9 @@ def test_cli_does_not_overwrite_without_force(tmp_path: Path) -> None:
     )
 
     assert result.exit_code != 0
-    assert "pass --force" in result.output
+    assert "pass --force" in _plain_output(result.output)
     assert output.read_text() == "preserve me"
+
+
+def _plain_output(value: str) -> str:
+    return " ".join(unstyle(value).split())

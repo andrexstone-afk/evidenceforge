@@ -6,6 +6,7 @@ from importlib.resources import files
 from pathlib import Path
 
 from evidenceforge.clients.terminology import ICD10CMClient, RxNormClient
+from evidenceforge.core.safety import validate_population_question
 from evidenceforge.llm.base import LLMProvider
 from evidenceforge.models import PICO, CodedBrief, Mapping, OntologyCandidate, OntologyName
 
@@ -33,16 +34,7 @@ class CodedBriefPipeline:
         self._rxnorm = rxnorm
 
     async def run(self, question: str, *, confirmed_no_phi: bool = False) -> CodedBrief:
-        cleaned = question.strip()
-        if len(cleaned) < 10:
-            raise ValueError("Clinical question must contain at least 10 characters")
-        if not confirmed_no_phi:
-            raise ValueError("Confirm that the question contains no PHI before processing.")
-        if _looks_like_phi(cleaned):
-            raise ValueError(
-                "Question appears to contain patient-identifiable information; "
-                "use a de-identified population-level question."
-            )
+        cleaned = validate_population_question(question, confirmed_no_phi=confirmed_no_phi)
         pico = await self._llm.generate_structured(
             system_prompt=load_pico_prompt(),
             user_prompt=cleaned,
@@ -62,16 +54,6 @@ class CodedBriefPipeline:
         if llm_run is None:
             raise RuntimeError("LLM provider did not expose run metadata")
         return CodedBrief(question=cleaned, pico=pico, mappings=mappings, llm_run=llm_run)
-
-
-def _looks_like_phi(question: str) -> bool:
-    patterns = (
-        r"\bMRN\s*[:#-]?\s*\d{4,}\b",
-        r"\b(?:date of birth|DOB)\s*[:#-]",
-        r"\b[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}\b",
-        r"\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b",
-    )
-    return any(re.search(pattern, question, flags=re.IGNORECASE) for pattern in patterns)
 
 
 def _condition_mapping(term: str, candidates: list[OntologyCandidate]) -> Mapping:

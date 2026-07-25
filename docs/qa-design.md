@@ -1,9 +1,10 @@
 # Claim-level synthesis and QA
 
 Phase 3 adds a provider-neutral synthesis, review, revision, and re-review service. It
-operates on normalized records returned by the evidence-retrieval boundary. It does not
-use model memory as evidence and does not yet persist or expose these artifacts through
-the CLI or API.
+operates on normalized records returned by the evidence-retrieval boundary and does not
+use model memory as evidence. Phase 4 persists completed artifacts and exposes API
+read/QA/JSON surfaces; CLI exposure and question-to-brief API orchestration are not yet
+implemented.
 
 ## Artifact flow
 
@@ -103,5 +104,6 @@ that it remains in untrusted user data and never enters system-prompt authority.
   relationship or unit is semantically correct.
 - The scripted provider and all Phase 3 evidence fixtures are synthetic. No clinical
   performance claim or evaluation metric is implied.
-- Persistence, API/CLI exposure, exports, and physician-reviewed evaluation are later
-  phases.
+- Phase 4 persists and exposes completed QA artifacts through API read/QA/JSON
+  surfaces. Question-to-brief API/CLI orchestration, Markdown/PDF export, and
+  physician-reviewed evaluation remain later work.

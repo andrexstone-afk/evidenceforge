@@ -7,12 +7,14 @@ requires-python = ">=3.12"
 license = { text = "Apache-2.0" }
 authors = [{ name = "EvidenceForge contributors" }]
 dependencies = [
+  "alembic>=1.14,<2",
   "defusedxml>=0.7,<1",
   "fastapi>=0.115,<1",
   "httpx>=0.28,<1",
   "openai>=1.68,<3",
   "pydantic-settings>=2.7,<3",
   "pyyaml>=6,<7",
+  "sqlalchemy>=2.0,<3",
   "structlog>=25.1,<26",
   "typer>=0.15,<1",
   "uvicorn>=0.34,<1",

@@ -98,6 +98,8 @@ def _normalize_study(study: Mapping[str, object]) -> ClinicalTrialRecord:
     sponsors = _child(protocol, "sponsorCollaboratorsModule", required=False)
     contacts = _child(protocol, "contactsLocationsModule", required=False)
     nct_id = _required_string(identification.get("nctId"))
+    primary_outcomes = _outcome_measures(outcomes, "primaryOutcomes")
+    secondary_outcomes = _outcome_measures(outcomes, "secondaryOutcomes")
     return ClinicalTrialRecord(
         nct_id=nct_id,
         title=_required_string(
@@ -112,8 +114,11 @@ def _normalize_study(study: Mapping[str, object]) -> ClinicalTrialRecord:
             for item in _as_object_list(arms.get("interventions"))
             if (value := _optional_string(item.get("name")))
         ],
-        outcomes=_outcome_measures(outcomes),
+        outcomes=[*primary_outcomes, *secondary_outcomes],
+        primary_outcomes=primary_outcomes,
+        secondary_outcomes=secondary_outcomes,
         study_type=_required_string(design.get("studyType")),
+        allocation=_optional_string(_child(design, "designInfo", required=False).get("allocation")),
         phases=_string_list(design.get("phases")),
         enrollment=_enrollment(design),
         overall_status=_required_string(status.get("overallStatus")),
@@ -127,13 +132,12 @@ def _normalize_study(study: Mapping[str, object]) -> ClinicalTrialRecord:
     )
 
 
-def _outcome_measures(outcomes: Mapping[str, object]) -> list[str]:
-    result: list[str] = []
-    for key in ("primaryOutcomes", "secondaryOutcomes"):
-        for item in _as_object_list(outcomes.get(key)):
-            if measure := _optional_string(item.get("measure")):
-                result.append(measure)
-    return result
+def _outcome_measures(outcomes: Mapping[str, object], key: str) -> list[str]:
+    return [
+        measure
+        for item in _as_object_list(outcomes.get(key))
+        if (measure := _optional_string(item.get("measure")))
+    ]
 
 
 def _enrollment(design: Mapping[str, object]) -> int | None:

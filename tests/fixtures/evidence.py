@@ -103,6 +103,7 @@ CLINICAL_TRIALS_RESPONSE = {
                 "designModule": {
                     "studyType": "INTERVENTIONAL",
                     "phases": ["PHASE3"],
+                    "designInfo": {"allocation": "RANDOMIZED"},
                     "enrollmentInfo": {"count": 120, "type": "ACTUAL"},
                 },
                 "armsInterventionsModule": {

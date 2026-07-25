@@ -250,8 +250,8 @@ class RevisionChange(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     claim_id: str = Field(pattern=r"^CLM-\d{4}$")
-    original_text: str | None = None
-    revised_text: str | None = None
+    original_text: QAText | None = None
+    revised_text: QAText | None = None
     original_source_ids: tuple[str, ...] = ()
     revised_source_ids: tuple[str, ...] = ()
     reason: QAText

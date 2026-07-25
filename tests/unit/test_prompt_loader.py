@@ -23,3 +23,9 @@ def test_prompt_loader_reads_versioned_phase_three_prompt() -> None:
 def test_prompt_loader_rejects_paths_outside_prompt_directory(path: str) -> None:
     with pytest.raises(ValueError, match="prompts directory"):
         load_versioned_prompt(path)
+
+
+@pytest.mark.parametrize("path", ["synthesis", "missing/v1.md"])
+def test_prompt_loader_rejects_non_file_paths(path: str) -> None:
+    with pytest.raises(ValueError, match="regular file"):
+        load_versioned_prompt(path)

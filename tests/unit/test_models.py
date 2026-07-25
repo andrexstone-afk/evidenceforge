@@ -46,3 +46,26 @@ def test_trial_url_must_match_nct_id() -> None:
             overall_status="COMPLETED",
             url="https://clinicaltrials.gov/study/NCT00000002",
         )
+
+
+def test_trial_allocation_uses_validated_evidence_text() -> None:
+    record = ClinicalTrialRecord(
+        nct_id="NCT00000001",
+        title="Synthetic title",
+        study_type="INTERVENTIONAL",
+        allocation=" RANDOMIZED ",
+        overall_status="COMPLETED",
+        url="https://clinicaltrials.gov/study/NCT00000001",
+    )
+
+    assert record.allocation == "RANDOMIZED"
+
+    with pytest.raises(ValidationError):
+        ClinicalTrialRecord(
+            nct_id="NCT00000001",
+            title="Synthetic title",
+            study_type="INTERVENTIONAL",
+            allocation=" ",
+            overall_status="COMPLETED",
+            url="https://clinicaltrials.gov/study/NCT00000001",
+        )

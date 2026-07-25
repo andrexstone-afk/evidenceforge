@@ -102,7 +102,7 @@ class ClinicalTrialRecord(BaseModel):
     primary_outcomes: list[EvidenceText] = Field(default_factory=list)
     secondary_outcomes: list[EvidenceText] = Field(default_factory=list)
     study_type: EvidenceText
-    allocation: str | None = None
+    allocation: EvidenceText | None = None
     phases: list[EvidenceText] = Field(default_factory=list)
     enrollment: int | None = Field(default=None, ge=0)
     overall_status: EvidenceText

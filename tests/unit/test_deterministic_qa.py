@@ -170,6 +170,29 @@ def test_negation_does_not_cross_into_a_later_positive_clause() -> None:
     assert "observational_causal_overstatement" in rules
 
 
+def test_contraction_negations_do_not_trigger() -> None:
+    observational = _evidence()[0].model_copy(update={"publication_types": ["Observational Study"]})
+    assert isinstance(observational, PubMedRecord)
+    claim = Claim(
+        claim_id="CLM-0001",
+        text="The study isn't randomized and didn't reduce outcomes.",
+        claim_type=ClaimType.STUDY_DESIGN,
+        linked_source_ids=["11111111"],
+        supporting_passages=[
+            EvidencePassage(
+                source_id="11111111",
+                text="At 52 weeks, visual acuity improved in both synthetic groups.",
+            )
+        ],
+    )
+
+    findings = run_deterministic_checks(_draft_with_claim(claim), [observational])
+    rules = {item.rule.value for item in findings}
+
+    assert "study_design_mismatch" not in rules
+    assert "observational_causal_overstatement" not in rules
+
+
 def test_percentage_whitespace_is_normalized() -> None:
     source = _evidence()[0].model_copy(update={"abstract": "The response was 50%."})
     assert isinstance(source, PubMedRecord)

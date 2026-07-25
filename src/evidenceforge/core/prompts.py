@@ -21,6 +21,11 @@ def load_versioned_prompt(relative_path: str) -> str:
     ):
         raise ValueError("Prompt path must remain inside the prompts directory")
     source_path = SOURCE_PROMPTS_PATH.joinpath(*path.parts)
-    if source_path.exists():
+    if source_path.is_file():
         return source_path.read_text(encoding="utf-8")
-    return files("evidenceforge").joinpath("prompts", *path.parts).read_text(encoding="utf-8")
+    if source_path.exists():
+        raise ValueError("Prompt path must identify a regular file")
+    packaged_path = files("evidenceforge").joinpath("prompts", *path.parts)
+    if not packaged_path.is_file():
+        raise ValueError("Prompt path must identify a regular file")
+    return packaged_path.read_text(encoding="utf-8")

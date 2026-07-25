@@ -104,3 +104,13 @@ def test_revision_change_can_record_citation_only_change() -> None:
     )
 
     assert change.original_text == change.revised_text
+
+
+def test_revision_change_rejects_empty_optional_text() -> None:
+    with pytest.raises(ValidationError):
+        RevisionChange(
+            claim_id="CLM-0001",
+            original_text="Original text.",
+            revised_text="   ",
+            reason="Synthetic invalid revision.",
+        )

@@ -301,7 +301,7 @@ def _has_unnegated_match(value: str, pattern: str) -> bool:
             r"[.;,:]|\b(?:although|and|but|however|yet)\b",
             value[: match.start()],
         )[-1]
-        prefix_tokens = re.findall(r"[a-z]+(?:n't)?", prefix_segment)
+        prefix_tokens = re.findall(r"[a-z]+(?:'[a-z]+)?", prefix_segment)
         if not negations.intersection(prefix_tokens[-3:]):
             return True
     return False

@@ -22,8 +22,10 @@ flowchart LR
     R --> A[Immutable revision artifact]
     A --> DR2[Deterministic re-check]
     A --> QR2[Independent re-review]
-    DR2 --> F
-    QR2 --> F
+    DR2 --> G2[Code-derived post-revision status]
+    QR2 --> G2
+    G2 -->|passing| F[Final draft and QA]
+    G2 -->|needs revision or blocked| B[Returned artifact marked non-passing]
 ```
 
 The result preserves the original draft, original QA report, revised draft, revision

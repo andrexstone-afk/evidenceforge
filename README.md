@@ -10,12 +10,13 @@ synthesis visible rather than presenting an opaque answer.
 
 ## Project status
 
-**Phase 3 — Synthesis and claim-level QA in progress.** The package has the Phase 1
-question-to-coded-Markdown slice and the Phase 2 PubMed/ClinicalTrials.gov v2 retrieval
-boundary. Phase 3 now adds a provider-neutral service for structured synthesis,
-claim-source linking, deterministic consistency checks, independent review, auditable
-revision, and re-review. High-severity issues cannot auto-pass. Integrating and
-persisting Phase 3 artifacts through the existing CLI/API surfaces remains future work.
+**Phase 4 — persistence and API.** The package includes the Phase 1
+question-to-coded-Markdown slice, Phase 2 PubMed/ClinicalTrials.gov v2 retrieval, and
+Phase 3 structured synthesis with claim-level QA and auditable revision. Phase 4 adds a
+normalized SQLite schema, migrations, transactional artifact persistence, and stable
+versioned API read/QA/JSON-export contracts. High-severity QA issues cannot auto-pass.
+The API currently ingests completed validated artifacts; question-to-brief API
+orchestration and Markdown/PDF export remain later work.
 
 ## Planned pipeline
 
@@ -38,6 +39,7 @@ Python 3.12 runtime when needed.
 git clone <repository-url>
 cd evidenceforge
 uv sync --extra dev
+uv run alembic upgrade head
 uv run evidenceforge version
 uv run evidenceforge serve
 uv run evidenceforge brief create \
@@ -46,8 +48,9 @@ uv run evidenceforge brief create \
   --output amd-coded-brief.md
 ```
 
-Open `http://127.0.0.1:8000/docs` for API documentation or call
-`GET /api/v1/health`.
+Open `http://127.0.0.1:8000/docs` for interactive API documentation or call
+`GET /api/v1/health`. See the [API contract](docs/api.md) and
+[database design](docs/database.md).
 
 ## Configuration
 
@@ -90,9 +93,10 @@ EVIDENCEFORGE_RUN_LIVE_INTEGRATION=1 uv run pytest tests/integration
 
 ## Architecture and safety
 
-The package uses an application factory, typed environment settings, and separate API,
-CLI, and configuration boundaries. Terminology and evidence clients are async,
-allowlisted, and replaceable. See [architecture](docs/architecture.md),
+The package uses an application factory, typed environment settings, separate API and
+CLI boundaries, and an injectable transactional repository. Terminology and evidence
+clients are async, allowlisted, and replaceable. See [architecture](docs/architecture.md),
+[database design](docs/database.md), [API v1](docs/api.md),
 [claim-level QA design](docs/qa-design.md), [safety](docs/safety.md), and
 [security policy](SECURITY.md).
 
@@ -102,8 +106,8 @@ allowlisted, and replaceable. See [architecture](docs/architecture.md),
   Markdown
 - Phase 2: complete — PubMed and ClinicalTrials.gov v2 retrieval and transparent
   ranking
-- Phase 3: in progress — structured synthesis, claim-source linking, QA, and revision
-- Phase 4: normalized persistence and stable API contracts
+- Phase 3: complete — structured synthesis, claim-source linking, QA, and revision
+- Phase 4: in progress — normalized persistence and stable API contracts
 - Phase 5+: exports, interface, evaluation, and portfolio release
 
 ## License and contributing

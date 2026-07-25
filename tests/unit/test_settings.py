@@ -28,3 +28,8 @@ def test_api_key_is_masked(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert "test-secret-value" not in repr(settings)
     assert "test-secret-value" not in settings.model_dump_json()
+
+
+def test_settings_reject_non_sqlite_database_url() -> None:
+    with pytest.raises(ValidationError, match="must use sqlite"):
+        Settings(database_url="postgresql://localhost/evidenceforge")

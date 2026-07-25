@@ -7,11 +7,11 @@ depend on those interfaces rather than vendor SDKs.
 ```mermaid
 flowchart TB
     CLI[Typer CLI] --> Pipeline[Pipeline services]
-    API[FastAPI API] --> Pipeline
+    API[FastAPI API] --> Store[Repository layer]
+    Pipeline --> Store
     Pipeline --> Terminology[Terminology client protocols]
     Pipeline --> Evidence[Evidence client protocols]
     Pipeline --> LLM[LLM provider protocol]
-    Pipeline --> Store[Repository layer]
     Pipeline --> Export[Exporters]
 ```
 
@@ -67,3 +67,33 @@ Pydantic models reject malformed outputs, and code—not a model—derives pass,
 or blocked status. All versions remain immutable. Questions, evidence, drafts, and QA
 findings are serialized as untrusted user-prompt data and never inserted into
 system-prompt authority. See [Claim-level synthesis and QA](qa-design.md).
+
+## Persistence and API boundary
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API as FastAPI v1
+    participant Guard as Pydantic + safety guards
+    participant Repo as Transactional repository
+    participant DB as SQLite
+
+    Client->>API: POST completed Phase 3 artifact
+    API->>Guard: Validate no-PHI confirmation and question
+    Guard->>Guard: Cross-check evidence, passages, and deterministic QA
+    Guard->>Repo: Save immutable aggregate
+    Repo->>DB: Write normalized graph + lossless snapshot
+    DB-->>Repo: Commit
+    Repo-->>API: Stable brief UUID
+    API-->>Client: 201 + result/QA/export links
+    Client->>API: GET brief UUID
+    API->>Repo: Parameterized lookup
+    Repo->>Guard: Revalidate stored snapshot
+    API-->>Client: Validated aggregate
+```
+
+The current POST contract ingests a completed artifact; orchestration from a question
+through external retrieval and synthesis is a later integration. Core provenance is
+normalized while a validated aggregate snapshot preserves exact round-trip fidelity.
+See [API v1](api.md), [database design](database.md), and
+[ADR 0004](adr/0004-normalized-sqlite-persistence.md).

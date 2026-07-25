@@ -1,5 +1,3 @@
-from typing import ClassVar
-
 import pytest
 import yaml
 
@@ -22,10 +20,11 @@ BRIEF_ID = "11111111-2222-4333-8444-555555555555"
 
 
 class RecordingPDFBackend:
-    html: ClassVar[str] = ""
+    def __init__(self) -> None:
+        self.html = ""
 
     def render(self, html: str) -> bytes:
-        type(self).html = html
+        self.html = html
         return b"%PDF-synthetic"
 
 
@@ -76,8 +75,10 @@ async def test_exports_preserve_unselected_mapping_without_inventing_code() -> N
     aggregate = aggregate.model_copy(update={"mappings": (unselected,)})
 
     document = build_export_document(brief_id=BRIEF_ID, aggregate=aggregate)
+    restored = BriefExportDocument.model_validate_json(render_export_json(document))
 
     assert document.metatags.conditions == ()
+    assert restored.aggregate.mappings[0].selected is None
     assert "No validated selection" in render_export_markdown(document)
     assert "No validated selection" in render_export_html(document)
 
@@ -150,13 +151,14 @@ async def test_pdf_boundary_receives_escaped_self_contained_html() -> None:
         aggregate=await persistence_input(),
     )
 
-    result = render_export_pdf(document, backend=RecordingPDFBackend())
+    backend = RecordingPDFBackend()
+    result = render_export_pdf(document, backend=backend)
 
     assert result == b"%PDF-synthetic"
-    assert "<!doctype html>" in RecordingPDFBackend.html
-    assert QUESTION in RecordingPDFBackend.html
-    assert "QA: pass" in RecordingPDFBackend.html
-    assert 'class="status status-pass"' in RecordingPDFBackend.html
+    assert "<!doctype html>" in backend.html
+    assert QUESTION in backend.html
+    assert "QA: pass" in backend.html
+    assert 'class="status status-pass"' in backend.html
 
 
 async def test_pdf_boundary_rejects_invalid_renderer_output() -> None:

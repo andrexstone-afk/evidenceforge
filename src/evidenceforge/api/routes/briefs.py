@@ -154,11 +154,6 @@ def export_brief(
             media_type="application/json",
             content=stored.aggregate.model_dump(mode="json"),
         )
-        repository.record_export(
-            brief_key,
-            export_format=export_format.value,
-            storage_reference="inline-api-response",
-        )
         return Response(
             content=payload.model_dump_json(),
             media_type="application/json",
@@ -168,7 +163,7 @@ def export_brief(
     repository.record_export(
         brief_key,
         export_format=export_format.value,
-        storage_reference="inline-api-response",
+        storage_reference="api-download",
     )
     filename = f"evidenceforge-{brief_key}.{rendered.extension}"
     return Response(

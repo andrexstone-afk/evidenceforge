@@ -62,8 +62,10 @@ class BriefExportService:
                 media_type="text/markdown; charset=utf-8",
                 extension="md",
             )
-        return RenderedBriefExport(
-            content=render_export_pdf(document, backend=self._pdf_backend),
-            media_type="application/pdf",
-            extension="pdf",
-        )
+        if export_format is ExportFormat.PDF:
+            return RenderedBriefExport(
+                content=render_export_pdf(document, backend=self._pdf_backend),
+                media_type="application/pdf",
+                extension="pdf",
+            )
+        raise ValueError(f"Unsupported export format: {export_format}")

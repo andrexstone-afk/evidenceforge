@@ -44,11 +44,13 @@ GET /api/v1/briefs/{brief_id}/export?format=markdown
 GET /api/v1/briefs/{brief_id}/export?format=pdf
 ```
 
-The original `format=json` response keeps the Phase 4 envelope stable. Add
-`download=true` for the canonical JSON document; Markdown and PDF are always download
-responses. Downloads include `Content-Disposition: attachment`. Invalid identifiers or
-formats return the standard `422` envelope; missing briefs return `404`; and an
-unavailable PDF renderer returns `503` without exposing native error details.
+The original `format=json` response keeps the Phase 4 envelope stable and does not
+create export metadata. Add `download=true` for the canonical JSON document; Markdown
+and PDF are always download responses. Downloads include
+`Content-Disposition: attachment`. Invalid identifiers or formats return the standard
+`422` envelope; missing briefs return `404`; and an unavailable PDF renderer returns
+`503` without exposing native error details. Successful downloads retain generic
+metadata, capped at the newest 100 records per brief.
 
 ## CLI
 

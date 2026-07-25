@@ -3,6 +3,7 @@
 from datetime import UTC, datetime
 from uuid import uuid4
 
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from evidenceforge.db.models import (
@@ -34,6 +35,8 @@ from evidenceforge.models.evidence import (
 )
 from evidenceforge.models.llm import LLMRunMetadata
 from evidenceforge.models.qa import QAReport, SynthesisDraft
+
+MAX_EXPORT_RECORDS_PER_BRIEF = 100
 
 
 class BriefNotFoundError(LookupError):
@@ -112,6 +115,22 @@ class BriefRepository:
                     created_at=datetime.now(UTC),
                 )
             )
+            session.flush()
+            obsolete_ids = list(
+                session.scalars(
+                    select(ExportedArtifactRow.id)
+                    .where(ExportedArtifactRow.brief_id == brief_id)
+                    .order_by(
+                        ExportedArtifactRow.created_at.desc(),
+                        ExportedArtifactRow.id.desc(),
+                    )
+                    .offset(MAX_EXPORT_RECORDS_PER_BRIEF)
+                )
+            )
+            if obsolete_ids:
+                session.execute(
+                    delete(ExportedArtifactRow).where(ExportedArtifactRow.id.in_(obsolete_ids))
+                )
 
     @staticmethod
     def _add_pico(

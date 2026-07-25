@@ -35,6 +35,8 @@ class WeasyPrintBackend:
                 bytes,
                 HTML(string=html, url_fetcher=_reject_resource_fetch).write_pdf(),
             )
+        except PDFExportError:
+            raise
         except Exception as error:
             raise PDFExportError("PDF rendering failed") from error
         if not result.startswith(b"%PDF-"):

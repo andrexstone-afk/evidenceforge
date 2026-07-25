@@ -19,7 +19,11 @@ from evidenceforge.db.models import (
     RevisionRow,
     SearchRow,
 )
-from evidenceforge.db.repository import BriefNotFoundError, BriefRepository
+from evidenceforge.db.repository import (
+    MAX_EXPORT_RECORDS_PER_BRIEF,
+    BriefNotFoundError,
+    BriefRepository,
+)
 from evidenceforge.db.session import create_engine_for_url, create_session_factory
 from tests.fixtures.persistence import persistence_input
 
@@ -105,6 +109,32 @@ async def test_repository_records_successful_export_metadata(tmp_path) -> None:
         assert row.format == "markdown"
         assert row.storage_reference == "/safe/output/brief.md"
         assert row.created_at.tzinfo is UTC
+
+
+async def test_repository_bounds_export_metadata_per_brief(tmp_path) -> None:
+    engine = create_engine_for_url(f"sqlite:///{tmp_path / 'bounded-exports.sqlite'}")
+    Base.metadata.create_all(engine)
+    session_factory = create_session_factory(engine)
+    repository = BriefRepository(session_factory)
+    stored = repository.save(await persistence_input())
+
+    for position in range(MAX_EXPORT_RECORDS_PER_BRIEF + 5):
+        repository.record_export(
+            stored.brief_id,
+            export_format="json",
+            storage_reference=f"synthetic-{position}",
+        )
+
+    with session_factory() as session:
+        rows = list(
+            session.scalars(
+                select(ExportedArtifactRow)
+                .where(ExportedArtifactRow.brief_id == stored.brief_id)
+                .order_by(ExportedArtifactRow.id)
+            )
+        )
+        assert len(rows) == MAX_EXPORT_RECORDS_PER_BRIEF
+        assert rows[0].storage_reference == "synthetic-5"
 
 
 def test_repository_raises_domain_error_for_unknown_brief(tmp_path) -> None:

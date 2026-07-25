@@ -14,7 +14,7 @@ def render_export_json(document: BriefExportDocument) -> str:
 
     return (
         json.dumps(
-            document.model_dump(mode="json", exclude_none=True),
+            document.model_dump(mode="json", exclude_none=False),
             ensure_ascii=False,
             indent=2,
         )
@@ -106,7 +106,7 @@ def render_export_markdown(document: BriefExportDocument) -> str:
                 f"### {record.record_id} - {_markdown_text(record.title)}",
                 "",
                 f"- Source: {source}",
-                f"- URL: {record.url}",
+                f"- URL: {_markdown_text(str(record.url))}",
                 f"- Retrieval ranking:{rank_text or ' Not ranked.'}",
                 "",
             ]

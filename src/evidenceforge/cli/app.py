@@ -214,7 +214,6 @@ def _write_export_transactionally(
             )
             os.close(descriptor)
             backup = Path(backup_name)
-            backup.unlink()
             output.replace(backup)
         with output.open("xb") as stream:
             output_created = True

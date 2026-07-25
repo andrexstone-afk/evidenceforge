@@ -1,11 +1,14 @@
 from uuid import UUID
 
 from fastapi.testclient import TestClient
+from sqlalchemy import func, select
 
 from evidenceforge.api.app import create_app
 from evidenceforge.db.base import Base
+from evidenceforge.db.models import ExportedArtifactRow
 from evidenceforge.db.repository import BriefRepository
 from evidenceforge.db.session import create_engine_for_url, create_session_factory
+from evidenceforge.exporters import PDFExportError
 from evidenceforge.settings import Settings
 from tests.fixtures.persistence import persistence_input
 from tests.fixtures.qa import QUESTION
@@ -18,8 +21,6 @@ class _SyntheticPDFBackend:
 
 class _FailingPDFBackend:
     def render(self, _html: str) -> bytes:
-        from evidenceforge.exporters import PDFExportError
-
         raise PDFExportError("synthetic renderer failure")
 
 
@@ -124,6 +125,14 @@ async def test_brief_api_round_trip_contract(tmp_path) -> None:
     assert pdf.status_code == 200
     assert pdf.headers["content-type"] == "application/pdf"
     assert pdf.content.startswith(b"%PDF-")
+
+    database_url = f"sqlite:///{tmp_path / 'api.sqlite'}"
+    export_session_factory = create_session_factory(create_engine_for_url(database_url))
+    with export_session_factory() as session:
+        artifact_count = session.scalar(select(func.count()).select_from(ExportedArtifactRow))
+        references = set(session.scalars(select(ExportedArtifactRow.storage_reference)))
+    assert artifact_count == 3
+    assert references == {"api-download"}
 
 
 async def test_brief_api_returns_consistent_not_found_error(tmp_path) -> None:

@@ -187,38 +187,40 @@ async def test_cli_export_removes_file_when_metadata_recording_fails(
         raise BriefNotFoundError(_brief_id)
 
     monkeypatch.setattr(BriefRepository, "record_export", fail_record_export)
-    first = CliRunner().invoke(
-        app,
-        [
-            "brief",
-            "export",
-            "--brief-id",
-            stored.brief_id,
-            "--format",
-            "json",
-            "--output",
-            str(output),
-        ],
-    )
-    assert first.exit_code != 0
-    assert failure_calls == 1
-    assert not output.exists()
+    try:
+        first = CliRunner().invoke(
+            app,
+            [
+                "brief",
+                "export",
+                "--brief-id",
+                stored.brief_id,
+                "--format",
+                "json",
+                "--output",
+                str(output),
+            ],
+        )
+        assert first.exit_code != 0
+        assert failure_calls == 1
+        assert not output.exists()
 
-    monkeypatch.setattr(BriefRepository, "record_export", original_record_export)
-    second = CliRunner().invoke(
-        app,
-        [
-            "brief",
-            "export",
-            "--brief-id",
-            stored.brief_id,
-            "--format",
-            "json",
-            "--output",
-            str(output),
-        ],
-    )
-    get_settings.cache_clear()
+        monkeypatch.setattr(BriefRepository, "record_export", original_record_export)
+        second = CliRunner().invoke(
+            app,
+            [
+                "brief",
+                "export",
+                "--brief-id",
+                stored.brief_id,
+                "--format",
+                "json",
+                "--output",
+                str(output),
+            ],
+        )
+    finally:
+        get_settings.cache_clear()
 
     assert second.exit_code == 0
     assert output.read_bytes().startswith(b"{")

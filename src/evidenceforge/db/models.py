@@ -240,6 +240,7 @@ class ClaimSourceLinkRow(Base):
             "claim_id",
             "external_source_id",
             "passage_text",
+            "passage_location",
             name="uq_claim_source_passage",
         ),
     )
@@ -254,8 +255,8 @@ class ClaimSourceLinkRow(Base):
         index=True,
     )
     external_source_id: Mapped[str] = mapped_column(String(32), nullable=False)
-    passage_text: Mapped[str | None] = mapped_column(Text)
-    passage_location: Mapped[str | None] = mapped_column(Text)
+    passage_text: Mapped[str] = mapped_column(Text, nullable=False)
+    passage_location: Mapped[str] = mapped_column(Text, nullable=False)
 
 
 class QaReportRow(Base):

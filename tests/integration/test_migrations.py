@@ -13,11 +13,11 @@ def test_initial_migration_upgrade_check_and_downgrade(
     database_url = f"sqlite:///{tmp_path / 'migration.sqlite'}"
     monkeypatch.setenv("EVIDENCEFORGE_DATABASE_URL", database_url)
     get_settings.cache_clear()
+    engine = create_engine_for_url(database_url)
     try:
         config = Config("alembic.ini")
 
         command.upgrade(config, "head")
-        engine = create_engine_for_url(database_url)
         tables = set(inspect(engine).get_table_names())
         assert {
             "alembic_version",
@@ -32,4 +32,5 @@ def test_initial_migration_upgrade_check_and_downgrade(
         remaining = set(inspect(engine).get_table_names())
         assert not {"briefs", "claims", "qa_reports", "revision_changes"} & remaining
     finally:
+        engine.dispose()
         get_settings.cache_clear()

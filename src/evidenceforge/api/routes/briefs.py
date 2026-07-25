@@ -68,7 +68,10 @@ def create_brief(
 @router.get(
     "/{brief_id}",
     response_model=BriefReadResponse,
-    responses={404: {"model": ErrorResponse}},
+    responses={
+        404: {"model": ErrorResponse},
+        422: {"model": ErrorResponse, "description": "Invalid brief identifier"},
+    },
 )
 def get_brief(brief_id: UUID, repository: RepositoryDependency) -> BriefReadResponse:
     """Return a fully reconstructed validated brief aggregate."""
@@ -81,7 +84,10 @@ def get_brief(brief_id: UUID, repository: RepositoryDependency) -> BriefReadResp
 @router.get(
     "/{brief_id}/qa",
     response_model=BriefQAResponse,
-    responses={404: {"model": ErrorResponse}},
+    responses={
+        404: {"model": ErrorResponse},
+        422: {"model": ErrorResponse, "description": "Invalid brief identifier"},
+    },
 )
 def get_brief_qa(brief_id: UUID, repository: RepositoryDependency) -> BriefQAResponse:
     """Return original and final QA artifacts without unrelated retrieval payloads."""
@@ -100,7 +106,10 @@ def get_brief_qa(brief_id: UUID, repository: RepositoryDependency) -> BriefQARes
 @router.get(
     "/{brief_id}/export",
     response_model=BriefExportResponse,
-    responses={404: {"model": ErrorResponse}},
+    responses={
+        404: {"model": ErrorResponse},
+        422: {"model": ErrorResponse, "description": "Invalid identifier or format"},
+    },
 )
 def export_brief(
     brief_id: UUID,

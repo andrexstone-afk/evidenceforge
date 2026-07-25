@@ -329,8 +329,8 @@ def upgrade() -> None:
         sa.Column("claim_id", sa.Integer(), nullable=False),
         sa.Column("evidence_record_id", sa.Integer(), nullable=True),
         sa.Column("external_source_id", sa.String(length=32), nullable=False),
-        sa.Column("passage_text", sa.Text(), nullable=True),
-        sa.Column("passage_location", sa.Text(), nullable=True),
+        sa.Column("passage_text", sa.Text(), nullable=False),
+        sa.Column("passage_location", sa.Text(), nullable=False),
         sa.ForeignKeyConstraint(
             ["claim_id"],
             ["claims.id"],
@@ -345,7 +345,11 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_claim_source_links")),
         sa.UniqueConstraint(
-            "claim_id", "external_source_id", "passage_text", name="uq_claim_source_passage"
+            "claim_id",
+            "external_source_id",
+            "passage_text",
+            "passage_location",
+            name="uq_claim_source_passage",
         ),
     )
     with op.batch_alter_table("claim_source_links", schema=None) as batch_op:

@@ -1,5 +1,6 @@
 from datetime import UTC
 
+import pytest
 from sqlalchemy import func, select
 
 from evidenceforge.db.base import Base
@@ -56,6 +57,15 @@ async def test_repository_round_trips_normalized_synthesis_qa(tmp_path) -> None:
         assert session.scalar(select(BriefRow.created_at)).tzinfo is UTC
         assert session.scalar(select(EvidenceRecordRow.retrieved_at)).tzinfo is UTC
         assert session.scalar(select(SearchRow.executed_at)).tzinfo is UTC
+        null_passages = session.scalar(
+            select(func.count())
+            .select_from(ClaimSourceLinkRow)
+            .where(
+                ClaimSourceLinkRow.passage_text.is_(None)
+                | ClaimSourceLinkRow.passage_location.is_(None)
+            )
+        )
+        assert null_passages == 0
 
 
 async def test_repository_preserves_evidence_as_brief_scoped_snapshots(tmp_path) -> None:
@@ -79,9 +89,7 @@ def test_repository_raises_domain_error_for_unknown_brief(tmp_path) -> None:
     Base.metadata.create_all(engine)
     repository = BriefRepository(create_session_factory(engine))
 
-    try:
+    with pytest.raises(BriefNotFoundError) as captured:
         repository.get("00000000-0000-0000-0000-000000000000")
-    except BriefNotFoundError as error:
-        assert str(error) == "00000000-0000-0000-0000-000000000000"
-    else:
-        raise AssertionError("Expected BriefNotFoundError")
+
+    assert str(captured.value) == "00000000-0000-0000-0000-000000000000"

@@ -77,7 +77,7 @@ class StoredBrief(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    brief_id: str = Field(pattern=r"^[0-9a-f-]{36}$")
+    brief_id: str = Field(pattern=r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
     aggregate: BriefPersistenceInput
 
 

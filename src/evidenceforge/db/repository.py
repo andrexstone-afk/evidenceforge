@@ -24,7 +24,12 @@ from evidenceforge.db.models import (
     TrialRow,
 )
 from evidenceforge.db.schemas import BriefPersistenceInput, StoredBrief
-from evidenceforge.models.evidence import ClinicalTrialRecord, PubMedRecord, SearchMetadata
+from evidenceforge.models.evidence import (
+    ClinicalTrialRecord,
+    EvidenceSource,
+    PubMedRecord,
+    SearchMetadata,
+)
 from evidenceforge.models.llm import LLMRunMetadata
 from evidenceforge.models.qa import QAReport, SynthesisDraft
 
@@ -188,7 +193,11 @@ class BriefRepository:
         }
         evidence_ids: dict[str, int] = {}
         for record in evidence:
-            source = "pubmed" if isinstance(record, PubMedRecord) else "clinicaltrials.gov"
+            source = (
+                EvidenceSource.PUBMED.value
+                if isinstance(record, PubMedRecord)
+                else EvidenceSource.CLINICAL_TRIALS.value
+            )
             row = EvidenceRecordRow(
                 source=source,
                 external_id=record.record_id,
@@ -374,14 +383,19 @@ def _add_claims(
         source_ids = set(claim.linked_source_ids) | set(passages_by_source)
         for source_id in sorted(source_ids):
             passages = passages_by_source.get(source_id, [(None, None)])
+            seen_passages: set[tuple[str, str]] = set()
             for passage_text, passage_location in passages:
+                normalized_passage = (passage_text or "", passage_location or "")
+                if normalized_passage in seen_passages:
+                    continue
+                seen_passages.add(normalized_passage)
                 session.add(
                     ClaimSourceLinkRow(
                         claim_id=row.id,
                         evidence_record_id=evidence_ids.get(source_id),
                         external_source_id=source_id,
-                        passage_text=passage_text,
-                        passage_location=passage_location,
+                        passage_text=normalized_passage[0],
+                        passage_location=normalized_passage[1],
                     )
                 )
 

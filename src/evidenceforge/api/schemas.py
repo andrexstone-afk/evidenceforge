@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from evidenceforge.db.schemas import BriefPersistenceInput
 from evidenceforge.models.ontology import Mapping
 from evidenceforge.models.pico import PICO
-from evidenceforge.models.qa import QAReport, RevisionArtifact, SynthesisQAResult
+from evidenceforge.models.qa import QAReport, QAStatus, RevisionArtifact, SynthesisQAResult
 from evidenceforge.pipelines.evidence_retrieval import EvidenceRetrievalResult
 
 
@@ -41,7 +41,7 @@ class BriefCreateResponse(BaseModel):
 
     brief_id: str
     processing_status: Literal["completed"]
-    qa_status: str
+    qa_status: QAStatus
     correlation_id: str
     links: BriefLinks
 

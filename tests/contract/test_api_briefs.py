@@ -237,6 +237,9 @@ def test_openapi_exposes_required_versioned_brief_routes(tmp_path) -> None:
     assert "/api/v1/briefs/{brief_id}" in paths
     assert "/api/v1/briefs/{brief_id}/qa" in paths
     assert "/api/v1/briefs/{brief_id}/export" in paths
+    assert "422" in paths["/api/v1/briefs/{brief_id}"]["get"]["responses"]
+    assert "422" in paths["/api/v1/briefs/{brief_id}/qa"]["get"]["responses"]
+    assert "422" in paths["/api/v1/briefs/{brief_id}/export"]["get"]["responses"]
     assert paths["/api/v1/briefs"]["post"]["responses"]["422"]["content"]["application/json"][
         "schema"
     ]["$ref"].endswith("/ErrorResponse")

@@ -1,5 +1,6 @@
 """Transactional repository for normalized and lossless brief persistence."""
 
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from sqlalchemy.orm import Session, sessionmaker
@@ -11,6 +12,7 @@ from evidenceforge.db.models import (
     ClaimRow,
     ClaimSourceLinkRow,
     EvidenceRecordRow,
+    ExportedArtifactRow,
     LlmRunRow,
     OntologyCandidateRow,
     OntologyMappingRow,
@@ -89,6 +91,27 @@ class BriefRepository:
                 raise BriefNotFoundError(brief_id)
             aggregate = BriefPersistenceInput.model_validate(row.aggregate_payload)
         return StoredBrief(brief_id=brief_id, aggregate=aggregate)
+
+    def record_export(
+        self,
+        brief_id: str,
+        *,
+        export_format: str,
+        storage_reference: str,
+    ) -> None:
+        """Record successful artifact generation without storing artifact contents."""
+
+        with self._session_factory.begin() as session:
+            if session.get(BriefRow, brief_id) is None:
+                raise BriefNotFoundError(brief_id)
+            session.add(
+                ExportedArtifactRow(
+                    brief_id=brief_id,
+                    format=export_format,
+                    storage_reference=storage_reference,
+                    created_at=datetime.now(UTC),
+                )
+            )
 
     @staticmethod
     def _add_pico(

@@ -55,10 +55,21 @@ Example response:
 
 - `GET /api/v1/briefs/{brief_id}` returns the lossless validated aggregate.
 - `GET /api/v1/briefs/{brief_id}/qa` returns the original QA, final QA, and revision.
-- `GET /api/v1/briefs/{brief_id}/export?format=json` returns a JSON export envelope.
+- `GET /api/v1/briefs/{brief_id}/export?format=json` retains the Phase 4 JSON envelope.
+- `GET /api/v1/briefs/{brief_id}/export?format=json&download=true` downloads canonical
+  lossless JSON.
+- `GET /api/v1/briefs/{brief_id}/export?format=markdown` downloads metatagged Markdown.
+- `GET /api/v1/briefs/{brief_id}/export?format=pdf` downloads a reviewed PDF.
 - `GET /api/v1/health` returns service health without touching the database.
 
-Markdown and PDF export are intentionally deferred to Phase 5.
+Export responses use the matching `Content-Type` and an attachment filename. Successful
+generation is recorded in `exported_artifacts`; artifact bytes are streamed in the
+response rather than stored in SQLite. See [the export contract](exports.md).
+
+```bash
+curl --fail --remote-header-name \
+  "http://127.0.0.1:8000/api/v1/briefs/52f80aa8-2604-4f68-906a-66ac5678b7b8/export?format=pdf"
+```
 
 ## Errors and request tracing
 
@@ -82,3 +93,6 @@ service creates a UUID. Validation diagnostics do not reflect submitted values.
 The create route requires `confirm_no_phi: true` and applies the same limited
 identifier-pattern screen as the CLI. This is defense in depth, not de-identification;
 EvidenceForge prohibits PHI input.
+
+If the local PDF runtime is unavailable, only PDF requests return `503` with
+`pdf_export_unavailable`; JSON and Markdown exports remain available.

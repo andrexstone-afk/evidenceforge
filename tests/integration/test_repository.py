@@ -9,6 +9,7 @@ from evidenceforge.db.models import (
     ClaimRow,
     ClaimSourceLinkRow,
     EvidenceRecordRow,
+    ExportedArtifactRow,
     LlmRunRow,
     OntologyCandidateRow,
     OntologyMappingRow,
@@ -82,6 +83,28 @@ async def test_repository_preserves_evidence_as_brief_scoped_snapshots(tmp_path)
     with session_factory() as session:
         evidence_count = session.scalar(select(func.count()).select_from(EvidenceRecordRow))
         assert evidence_count == 4
+
+
+async def test_repository_records_successful_export_metadata(tmp_path) -> None:
+    engine = create_engine_for_url(f"sqlite:///{tmp_path / 'exports.sqlite'}")
+    Base.metadata.create_all(engine)
+    session_factory = create_session_factory(engine)
+    repository = BriefRepository(session_factory)
+    stored = repository.save(await persistence_input())
+
+    repository.record_export(
+        stored.brief_id,
+        export_format="markdown",
+        storage_reference="/safe/output/brief.md",
+    )
+
+    with session_factory() as session:
+        row = session.scalar(select(ExportedArtifactRow))
+        assert row is not None
+        assert row.brief_id == stored.brief_id
+        assert row.format == "markdown"
+        assert row.storage_reference == "/safe/output/brief.md"
+        assert row.created_at.tzinfo is UTC
 
 
 def test_repository_raises_domain_error_for_unknown_brief(tmp_path) -> None:

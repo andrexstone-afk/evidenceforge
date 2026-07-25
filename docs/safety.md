@@ -23,3 +23,13 @@ findings block automatic passage, including after revision.
 
 These controls detect defined consistency failures; they do not clinically validate a
 brief or replace expert assessment. Current QA fixtures are synthetic.
+
+Reviewed exports do not call terminology, evidence, or LLM services. JSON preserves the
+validated aggregate as data. Markdown escapes untrusted clinical and retrieved text in
+the rendered body so embedded HTML or image syntax is inert. PDF content is HTML-escaped,
+self-contained, and rendered with external resource fetching disabled. The safety
+disclaimer and final QA status remain visible in human-readable exports.
+
+Export metadata excludes artifact bytes and user-provided local paths; the latter may
+contain identifying information. CLI overwrite handling never replaces directories and
+restores a prior file if metadata persistence fails.

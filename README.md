@@ -10,13 +10,14 @@ synthesis visible rather than presenting an opaque answer.
 
 ## Project status
 
-**Phase 4 — persistence and API.** The package includes the Phase 1
+**Phase 5 — export and interface.** The package includes the Phase 1
 question-to-coded-Markdown slice, Phase 2 PubMed/ClinicalTrials.gov v2 retrieval, and
 Phase 3 structured synthesis with claim-level QA and auditable revision. Phase 4 adds a
 normalized SQLite schema, migrations, transactional artifact persistence, and stable
-versioned API read/QA/JSON-export contracts. High-severity QA issues cannot auto-pass.
-The API currently ingests completed validated artifacts; question-to-brief API
-orchestration and Markdown/PDF export remain later work.
+versioned API. Phase 5 now provides lossless JSON, metatagged Markdown, and reviewed PDF
+exports through the API and CLI. High-severity QA issues cannot auto-pass. The API
+currently ingests completed validated artifacts; question-to-brief API orchestration
+and the Streamlit interface remain later work.
 
 ## Planned pipeline
 
@@ -32,7 +33,9 @@ flowchart LR
 
 ## Local setup
 
-Prerequisites: Git and [`uv`](https://docs.astral.sh/uv/). `uv` installs the required
+Prerequisites: Git, [`uv`](https://docs.astral.sh/uv/), and the Pango runtime used by
+WeasyPrint. On macOS with Homebrew, run `brew install pango`; on Ubuntu, install
+`libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0`. `uv` installs the required
 Python 3.12 runtime when needed.
 
 ```bash
@@ -50,7 +53,10 @@ uv run evidenceforge brief create \
 
 Open `http://127.0.0.1:8000/docs` for interactive API documentation or call
 `GET /api/v1/health`. See the [API contract](docs/api.md) and
-[database design](docs/database.md).
+[export contract](docs/exports.md), and [database design](docs/database.md).
+
+On Apple Silicon, if WeasyPrint cannot locate Homebrew libraries, prefix PDF commands
+with `DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib`.
 
 ## Configuration
 
@@ -83,6 +89,15 @@ The CLI requires an explicit `--confirm-no-phi` declaration and applies a limite
 identifier-pattern screen before any external call. This is defense in depth, not a
 guarantee that free text is de-identified. Never enter patient data.
 
+Export an already persisted, reviewed brief without an external call:
+
+```bash
+uv run evidenceforge brief export \
+  --brief-id 52f80aa8-2604-4f68-906a-66ac5678b7b8 \
+  --format markdown \
+  --output reviewed-brief.md
+```
+
 PubMed requests require `EVIDENCEFORGE_NCBI_EMAIL` so the client can send NCBI's
 required maintainer contact parameter. `EVIDENCEFORGE_NCBI_API_KEY` is optional. Live
 evidence checks are opt-in:
@@ -97,6 +112,7 @@ The package uses an application factory, typed environment settings, separate AP
 CLI boundaries, and an injectable transactional repository. Terminology and evidence
 clients are async, allowlisted, and replaceable. See [architecture](docs/architecture.md),
 [database design](docs/database.md), [API v1](docs/api.md),
+[export design](docs/exports.md),
 [claim-level QA design](docs/qa-design.md), [safety](docs/safety.md), and
 [security policy](SECURITY.md).
 
@@ -107,8 +123,9 @@ clients are async, allowlisted, and replaceable. See [architecture](docs/archite
 - Phase 2: complete — PubMed and ClinicalTrials.gov v2 retrieval and transparent
   ranking
 - Phase 3: complete — structured synthesis, claim-source linking, QA, and revision
-- Phase 4: in progress — normalized persistence and stable API contracts
-- Phase 5+: exports, interface, evaluation, and portfolio release
+- Phase 4: complete — normalized persistence and stable API contracts
+- Phase 5: in progress — JSON/Markdown/PDF exports complete; Streamlit interface next
+- Phase 6+: evaluation, generalization, and portfolio release
 
 ## License and contributing
 

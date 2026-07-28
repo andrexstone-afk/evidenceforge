@@ -3,7 +3,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import Field, HttpUrl, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     service_name: str = "evidenceforge"
     api_host: str = "127.0.0.1"
     api_port: int = Field(default=8000, ge=1, le=65535)
+    streamlit_api_base_url: HttpUrl = HttpUrl("http://127.0.0.1:8000")
     database_url: str = "sqlite:///./evidenceforge.db"
     llm_provider: Literal["mock", "openai"] = "mock"
     openai_api_key: SecretStr | None = Field(default=None, repr=False)
@@ -40,6 +41,17 @@ class Settings(BaseSettings):
 
         if not value.startswith("sqlite:///"):
             raise ValueError("database_url must use sqlite:/// during the MVP")
+        return value
+
+    @field_validator("streamlit_api_base_url")
+    @classmethod
+    def validate_streamlit_api_base_url(cls, value: HttpUrl) -> HttpUrl:
+        """Reject credentials, query state, and non-root paths in the API origin."""
+
+        if value.username or value.password:
+            raise ValueError("streamlit_api_base_url must not contain credentials")
+        if value.query or value.fragment or value.path not in {"", "/"}:
+            raise ValueError("streamlit_api_base_url must be an origin without path or query")
         return value
 
 

@@ -33,3 +33,16 @@ def test_api_key_is_masked(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_settings_reject_non_sqlite_database_url() -> None:
     with pytest.raises(ValidationError, match="must use sqlite"):
         Settings(database_url="postgresql://localhost/evidenceforge")
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "https://user:secret@example.com",
+        "https://example.com/api",
+        "https://example.com?target=internal",
+    ],
+)
+def test_settings_reject_unsafe_streamlit_api_origins(value: str) -> None:
+    with pytest.raises(ValidationError, match="streamlit_api_base_url"):
+        Settings(streamlit_api_base_url=value)

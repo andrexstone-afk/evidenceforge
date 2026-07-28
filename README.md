@@ -15,9 +15,9 @@ question-to-coded-Markdown slice, Phase 2 PubMed/ClinicalTrials.gov v2 retrieval
 Phase 3 structured synthesis with claim-level QA and auditable revision. Phase 4 adds a
 normalized SQLite schema, migrations, transactional artifact persistence, and stable
 versioned API. Phase 5 now provides lossless JSON, metatagged Markdown, and reviewed PDF
-exports through the API and CLI. High-severity QA issues cannot auto-pass. The API
-currently ingests completed validated artifacts; question-to-brief API orchestration
-and the Streamlit interface remain later work.
+exports through the API and CLI plus a Streamlit interface for inspecting completed
+reviewed artifacts. High-severity QA issues cannot auto-pass. The API currently ingests
+completed validated artifacts; question-to-brief API orchestration remains later work.
 
 ## Planned pipeline
 
@@ -54,6 +54,16 @@ uv run evidenceforge brief create \
 Open `http://127.0.0.1:8000/docs` for interactive API documentation or call
 `GET /api/v1/health`. See the [API contract](docs/api.md) and
 [export contract](docs/exports.md), and [database design](docs/database.md).
+
+In a second terminal, start the evidence-review interface:
+
+```bash
+uv run streamlit run streamlit_app/app.py
+```
+
+Open `http://127.0.0.1:8501` and enter a persisted brief UUID. The UI reads only the
+configured EvidenceForge API origin and does not accept clinical free text. See the
+[Streamlit interface guide](docs/streamlit.md).
 
 On Apple Silicon, if WeasyPrint cannot locate Homebrew libraries, prefix PDF commands
 with `DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib`.
@@ -124,7 +134,7 @@ clients are async, allowlisted, and replaceable. See [architecture](docs/archite
   ranking
 - Phase 3: complete — structured synthesis, claim-source linking, QA, and revision
 - Phase 4: complete — normalized persistence and stable API contracts
-- Phase 5: in progress — JSON/Markdown/PDF exports complete; Streamlit interface next
+- Phase 5: complete — JSON/Markdown/PDF exports and Streamlit evidence-review interface
 - Phase 6+: evaluation, generalization, and portfolio release
 
 ## License and contributing

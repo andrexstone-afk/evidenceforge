@@ -33,3 +33,11 @@ disclaimer and final QA status remain visible in human-readable exports.
 Export metadata excludes artifact bytes and user-provided local paths; the latter may
 contain identifying information. CLI overwrite handling never replaces directories and
 restores a prior file if metadata persistence fails.
+
+The Streamlit interface accepts a persisted brief UUID, not a clinical question or
+patient data. Its API origin comes from typed environment configuration and cannot be
+changed through the browser. The dedicated client uses bounded timeouts, does not follow
+redirects, validates response schemas and export media types, and converts failures to
+stable messages without reflecting server response bodies. Retrieved and generated
+text is displayed without unsafe HTML. Blocked final QA is presented as an error and is
+never styled as passing.

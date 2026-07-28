@@ -1,4 +1,4 @@
-.PHONY: install lint format-check typecheck test check run
+.PHONY: install lint format-check typecheck test check run demo
 
 install:
 	uv sync --extra dev
@@ -20,3 +20,5 @@ check: lint format-check typecheck test
 run:
 	uv run evidenceforge serve
 
+demo:
+	uv run streamlit run streamlit_app/app.py

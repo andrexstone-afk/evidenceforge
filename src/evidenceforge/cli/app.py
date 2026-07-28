@@ -3,6 +3,7 @@
 import asyncio
 import json
 import os
+import stat
 import tempfile
 from pathlib import Path
 from typing import Annotated
@@ -265,9 +266,17 @@ def score_evaluation_run(
     if output.exists() and not force:
         raise typer.BadParameter(f"Output already exists: {output}; pass --force to replace it")
     try:
-        if input_path.stat().st_size > MAX_EVALUATION_INPUT_BYTES:
+        descriptor = os.open(input_path, os.O_RDONLY | os.O_NONBLOCK)
+        try:
+            if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+                raise typer.BadParameter("Evaluation input must be a regular file")
+            with os.fdopen(descriptor, "rb", closefd=False) as stream:
+                raw = stream.read(MAX_EVALUATION_INPUT_BYTES + 1)
+        finally:
+            os.close(descriptor)
+        if len(raw) > MAX_EVALUATION_INPUT_BYTES:
             raise typer.BadParameter("Evaluation input exceeds the 10 MiB safety limit")
-        serialized = input_path.read_text(encoding="utf-8")
+        serialized = raw.decode("utf-8")
         validate_no_phi_artifact(serialized)
         run = EvaluationRun.model_validate_json(serialized)
         report = score_evaluation(run, tool_version=__version__)

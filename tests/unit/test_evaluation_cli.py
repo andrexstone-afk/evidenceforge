@@ -1,9 +1,12 @@
 import json
+import os
 from pathlib import Path
 
+import pytest
 from click import unstyle
 from typer.testing import CliRunner
 
+from evidenceforge.cli import app as cli_module
 from evidenceforge.cli.app import app
 from tests.fixtures.evaluation import synthetic_evaluation_run
 
@@ -83,6 +86,52 @@ def test_evaluation_cli_rejects_invalid_json_without_traceback(tmp_path: Path) -
     assert result.exit_code != 0
     assert "Invalid evaluation input" in _plain_output(result.output)
     assert "Traceback" not in result.output
+
+
+def test_evaluation_cli_rejects_non_regular_input(tmp_path: Path) -> None:
+    if not hasattr(os, "mkfifo"):
+        pytest.skip("FIFO creation is unavailable on this platform")
+    input_path = tmp_path / "run.fifo"
+    os.mkfifo(input_path)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "evaluation",
+            "score",
+            "--input",
+            str(input_path),
+            "--output",
+            str(tmp_path / "report.json"),
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "must be a regular file" in _plain_output(result.output)
+
+
+def test_evaluation_cli_reads_only_through_size_boundary(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    input_path = tmp_path / "oversized.json"
+    input_path.write_bytes(b"x" * 9)
+    monkeypatch.setattr(cli_module, "MAX_EVALUATION_INPUT_BYTES", 8)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "evaluation",
+            "score",
+            "--input",
+            str(input_path),
+            "--output",
+            str(tmp_path / "report.json"),
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "exceeds the 10 MiB safety limit" in _plain_output(result.output)
 
 
 def _plain_output(value: str) -> str:

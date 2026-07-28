@@ -2,7 +2,11 @@ import pytest
 from pydantic import ValidationError
 
 from evidenceforge.evaluation import score_evaluation
-from evidenceforge.models.evaluation import DatasetReviewStatus, EvaluationRun
+from evidenceforge.models.evaluation import (
+    DatasetReviewStatus,
+    EvaluationReport,
+    EvaluationRun,
+)
 from tests.fixtures.evaluation import synthetic_evaluation_run
 
 
@@ -49,6 +53,29 @@ def test_evaluation_input_hash_is_stable() -> None:
     second = score_evaluation(run, tool_version="test")
 
     assert first.input_sha256 == second.input_sha256
+
+
+@pytest.mark.parametrize(
+    ("field", "invalid_value"),
+    (
+        ("limitations", ()),
+        ("model_versions", {}),
+        ("prompt_versions", {}),
+        ("disclaimer", "Evaluation is clinically validated."),
+    ),
+)
+def test_evaluation_report_rejects_weakened_provenance(
+    field: str,
+    invalid_value: object,
+) -> None:
+    payload = score_evaluation(
+        synthetic_evaluation_run(),
+        tool_version="test",
+    ).model_dump(mode="python")
+    payload[field] = invalid_value
+
+    with pytest.raises(ValidationError):
+        EvaluationReport.model_validate(payload)
 
 
 def test_duplicate_predicted_outcomes_reduce_pico_accuracy() -> None:

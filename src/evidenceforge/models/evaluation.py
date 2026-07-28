@@ -296,17 +296,20 @@ class EvaluationReport(BaseModel):
     reviewer_count: int = Field(ge=0)
     reviewed_at: date | None = None
     case_count: int = Field(ge=1)
-    limitations: tuple[EvaluationText, ...]
+    limitations: tuple[EvaluationText, ...] = Field(min_length=1)
     system_name: EvaluationText
     system_version: EvaluationText
-    model_versions: dict[str, str]
-    prompt_versions: dict[str, str]
+    model_versions: dict[EvaluationText, EvaluationText] = Field(min_length=1)
+    prompt_versions: dict[EvaluationText, EvaluationText] = Field(min_length=1)
     cost_basis: EvaluationText
     run_executed_at: datetime
     generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     tool_version: EvaluationText
     metrics: EvaluationMetrics
-    disclaimer: str = (
+    disclaimer: Literal[
+        "Evaluation results describe only this dataset and scoring definition; "
+        "they do not establish clinical validity or medical-device performance."
+    ] = (
         "Evaluation results describe only this dataset and scoring definition; "
         "they do not establish clinical validity or medical-device performance."
     )

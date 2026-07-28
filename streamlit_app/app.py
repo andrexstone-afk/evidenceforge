@@ -47,8 +47,7 @@ def _load_brief(raw_brief_id: str) -> None:
     client = _client()
     try:
         client.health()
-        brief = client.get_brief(brief_id)
-        qa = client.get_qa(brief_id)
+        brief, qa = client.get_review_bundle(brief_id)
     except EvidenceForgeAPIError as error:
         st.error(str(error))
         return
@@ -214,7 +213,10 @@ def _render_claim_qa(brief: BriefReadResponse, qa: BriefQAResponse) -> None:
     for claim in result.final_draft.claims:
         with st.expander(f"{claim.claim_id} · {claim.claim_type.value}", expanded=True):
             st.text(claim.text)
-            assessment = assessments[claim.claim_id]
+            assessment = assessments.get(claim.claim_id)
+            if assessment is None:
+                st.error("QA assessment missing; claim support cannot be verified.")
+                continue
             st.table(
                 [
                     {"field": "Support", "value": assessment.classification.value},

@@ -73,6 +73,24 @@ class EvidenceForgeAPIClient:
         response = self._get(f"/api/v1/briefs/{brief_id}/qa")
         return self._validate_json(response, BriefQAResponse)
 
+    def get_review_bundle(
+        self,
+        brief_id: UUID,
+    ) -> tuple[BriefReadResponse, BriefQAResponse]:
+        """Return matching brief and QA responses or reject inconsistent API state."""
+
+        brief = self.get_brief(brief_id)
+        qa = self.get_qa(brief_id)
+        synthesis = brief.aggregate.synthesis_qa
+        if (
+            qa.brief_id != brief.brief_id
+            or qa.original_qa != synthesis.original_qa
+            or qa.final_qa != synthesis.final_qa
+            or qa.revision != synthesis.revision
+        ):
+            raise EvidenceForgeAPIError("The API returned inconsistent review artifacts.")
+        return brief, qa
+
     def download_export(self, brief_id: UUID, export_format: ExportName) -> ExportArtifact:
         """Download one reviewed export after validating its declared media type."""
 

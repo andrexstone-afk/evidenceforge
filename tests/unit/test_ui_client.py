@@ -39,6 +39,7 @@ async def test_ui_client_validates_health_brief_and_qa() -> None:
     assert client.health().version == "0.1.0"
     assert client.get_brief(BRIEF_ID) == brief
     assert client.get_qa(BRIEF_ID) == qa
+    assert client.get_review_bundle(BRIEF_ID) == (brief, qa)
 
 
 @pytest.mark.parametrize(
@@ -130,3 +131,33 @@ def test_ui_client_does_not_follow_redirects() -> None:
 
     with pytest.raises(EvidenceForgeAPIError, match="unexpected error"):
         client.health()
+
+
+async def test_ui_client_rejects_mismatched_brief_and_qa_responses() -> None:
+    aggregate = await persistence_input()
+    brief = BriefReadResponse(brief_id=str(BRIEF_ID), aggregate=aggregate)
+    incomplete_qa = aggregate.synthesis_qa.final_qa.model_copy(
+        update={"assessments": aggregate.synthesis_qa.final_qa.assessments[:1]}
+    )
+    qa = BriefQAResponse(
+        brief_id=str(BRIEF_ID),
+        original_qa=aggregate.synthesis_qa.original_qa,
+        final_qa=incomplete_qa,
+        revision=aggregate.synthesis_qa.revision,
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/qa"):
+            payload = qa.model_dump_json()
+        else:
+            payload = brief.model_dump_json()
+        return httpx.Response(200, content=payload)
+
+    client = EvidenceForgeAPIClient(
+        base_url="http://evidenceforge.test",
+        timeout_seconds=1,
+        transport=httpx.MockTransport(handler),
+    )
+
+    with pytest.raises(EvidenceForgeAPIError, match="inconsistent review artifacts"):
+        client.get_review_bundle(BRIEF_ID)

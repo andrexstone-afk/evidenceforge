@@ -90,3 +90,25 @@ async def test_streamlit_app_never_presents_blocked_qa_as_passing() -> None:
     assert not app.exception
     assert any("BLOCKED" in item.value for item in app.error)
     assert not any("status: PASS" in item.value for item in app.success)
+
+
+async def test_streamlit_app_fails_closed_when_claim_assessment_is_missing() -> None:
+    aggregate = await persistence_input()
+    brief = BriefReadResponse(brief_id=BRIEF_ID, aggregate=aggregate)
+    incomplete_report = aggregate.synthesis_qa.final_qa.model_copy(
+        update={"assessments": aggregate.synthesis_qa.final_qa.assessments[:1]}
+    )
+    qa = BriefQAResponse(
+        brief_id=BRIEF_ID,
+        original_qa=aggregate.synthesis_qa.original_qa,
+        final_qa=incomplete_report,
+        revision=aggregate.synthesis_qa.revision,
+    )
+    app = AppTest.from_file(APP_PATH)
+    app.session_state[BRIEF_STATE] = brief
+    app.session_state[QA_STATE] = qa
+
+    app.run(timeout=15)
+
+    assert not app.exception
+    assert any("claim support cannot be verified" in item.value for item in app.error)

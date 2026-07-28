@@ -116,25 +116,43 @@ async def test_repository_bounds_export_metadata_per_brief(tmp_path) -> None:
     Base.metadata.create_all(engine)
     session_factory = create_session_factory(engine)
     repository = BriefRepository(session_factory)
-    stored = repository.save(await persistence_input())
+    first = repository.save(await persistence_input())
+    second = repository.save(await persistence_input())
 
     for position in range(MAX_EXPORT_RECORDS_PER_BRIEF + 5):
         repository.record_export(
-            stored.brief_id,
+            first.brief_id,
             export_format="json",
-            storage_reference=f"synthetic-{position}",
+            storage_reference=f"first-{position}",
+        )
+    for position in range(MAX_EXPORT_RECORDS_PER_BRIEF + 7):
+        repository.record_export(
+            second.brief_id,
+            export_format="markdown",
+            storage_reference=f"second-{position}",
         )
 
     with session_factory() as session:
-        rows = list(
+        first_rows = list(
             session.scalars(
                 select(ExportedArtifactRow)
-                .where(ExportedArtifactRow.brief_id == stored.brief_id)
+                .where(ExportedArtifactRow.brief_id == first.brief_id)
                 .order_by(ExportedArtifactRow.id)
             )
         )
-        assert len(rows) == MAX_EXPORT_RECORDS_PER_BRIEF
-        assert rows[0].storage_reference == "synthetic-5"
+        second_rows = list(
+            session.scalars(
+                select(ExportedArtifactRow)
+                .where(ExportedArtifactRow.brief_id == second.brief_id)
+                .order_by(ExportedArtifactRow.id)
+            )
+        )
+        assert len(first_rows) == MAX_EXPORT_RECORDS_PER_BRIEF
+        assert first_rows[0].storage_reference == "first-5"
+        assert {row.brief_id for row in first_rows} == {first.brief_id}
+        assert len(second_rows) == MAX_EXPORT_RECORDS_PER_BRIEF
+        assert second_rows[0].storage_reference == "second-7"
+        assert {row.brief_id for row in second_rows} == {second.brief_id}
 
 
 def test_repository_raises_domain_error_for_unknown_brief(tmp_path) -> None:

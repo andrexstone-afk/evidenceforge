@@ -52,6 +52,13 @@ brief-scoped snapshots rather than globally unique canonical rows because upstre
 records can change after a brief is reviewed. SQLAlchemy supplies parameterized access;
 API brief identifiers are also validated as UUIDs before repository lookup.
 
+Each successful API download or CLI export adds an `exported_artifacts` row containing
+the brief identifier, format, timestamp, and storage reference. Backward-compatible
+inline JSON reads are not recorded. API downloads use a generic marker; the CLI records
+a local-output marker but deliberately does not persist the user-provided path, which
+could contain identifying information. Export bytes are not stored in the database.
+Retention is bounded to the 100 newest records per brief.
+
 ## Migration workflow
 
 After changing mapped models:

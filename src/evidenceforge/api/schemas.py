@@ -67,7 +67,7 @@ class BriefQAResponse(BaseModel):
 
 
 class BriefExportResponse(BaseModel):
-    """JSON export envelope; Markdown and PDF arrive in Phase 5."""
+    """Backward-compatible Phase 4 JSON export envelope."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 

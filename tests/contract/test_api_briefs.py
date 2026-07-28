@@ -1,17 +1,30 @@
 from uuid import UUID
 
 from fastapi.testclient import TestClient
+from sqlalchemy import func, select
 
 from evidenceforge.api.app import create_app
 from evidenceforge.db.base import Base
+from evidenceforge.db.models import ExportedArtifactRow
 from evidenceforge.db.repository import BriefRepository
 from evidenceforge.db.session import create_engine_for_url, create_session_factory
+from evidenceforge.exporters import PDFExportError
 from evidenceforge.settings import Settings
 from tests.fixtures.persistence import persistence_input
 from tests.fixtures.qa import QUESTION
 
 
-def _client(tmp_path) -> TestClient:
+class _SyntheticPDFBackend:
+    def render(self, _html: str) -> bytes:
+        return b"%PDF-synthetic-api"
+
+
+class _FailingPDFBackend:
+    def render(self, _html: str) -> bytes:
+        raise PDFExportError("synthetic renderer failure")
+
+
+def _client(tmp_path, *, pdf_backend=None) -> TestClient:
     database_url = f"sqlite:///{tmp_path / 'api.sqlite'}"
     engine = create_engine_for_url(database_url)
     Base.metadata.create_all(engine)
@@ -20,6 +33,7 @@ def _client(tmp_path) -> TestClient:
         create_app(
             repository=repository,
             settings=Settings(environment="test", database_url=database_url),
+            pdf_backend=pdf_backend or _SyntheticPDFBackend(),
         )
     )
 
@@ -85,8 +99,40 @@ async def test_brief_api_round_trip_contract(tmp_path) -> None:
 
     exported = client.get(body["links"]["export"], params={"format": "json"})
     assert exported.status_code == 200
+    assert exported.headers["content-type"] == "application/json"
+    assert "content-disposition" not in exported.headers
     assert exported.json()["format"] == "json"
     assert exported.json()["content"]["question"] == QUESTION
+
+    canonical_json = client.get(
+        body["links"]["export"],
+        params={"format": "json", "download": "true"},
+    )
+    assert canonical_json.status_code == 200
+    assert canonical_json.headers["content-type"] == "application/json"
+    assert canonical_json.headers["content-disposition"].endswith(f'evidenceforge-{brief_id}.json"')
+    assert canonical_json.json()["schema_version"] == "1.0"
+    assert canonical_json.json()["metatags"]["qa_status"] == "pass"
+    assert canonical_json.json()["aggregate"]["question"] == QUESTION
+
+    markdown = client.get(body["links"]["export"], params={"format": "markdown"})
+    assert markdown.status_code == 200
+    assert markdown.headers["content-type"].startswith("text/markdown")
+    assert markdown.text.startswith("---\nbrief_id:")
+    assert "## Claim-level QA" in markdown.text
+
+    pdf = client.get(body["links"]["export"], params={"format": "pdf"})
+    assert pdf.status_code == 200
+    assert pdf.headers["content-type"] == "application/pdf"
+    assert pdf.content.startswith(b"%PDF-")
+
+    database_url = f"sqlite:///{tmp_path / 'api.sqlite'}"
+    export_session_factory = create_session_factory(create_engine_for_url(database_url))
+    with export_session_factory() as session:
+        artifact_count = session.scalar(select(func.count()).select_from(ExportedArtifactRow))
+        references = set(session.scalars(select(ExportedArtifactRow.storage_reference)))
+    assert artifact_count == 3
+    assert references == {"api-download"}
 
 
 async def test_brief_api_returns_consistent_not_found_error(tmp_path) -> None:
@@ -229,6 +275,18 @@ async def test_brief_api_reports_unavailable_persistence(tmp_path) -> None:
     assert response.headers["X-Correlation-ID"]
 
 
+async def test_brief_api_reports_unavailable_pdf_renderer(tmp_path) -> None:
+    client = _client(tmp_path, pdf_backend=_FailingPDFBackend())
+    created = client.post("/api/v1/briefs", json=await _request_payload())
+    brief_id = created.json()["brief_id"]
+
+    response = client.get(f"/api/v1/briefs/{brief_id}/export", params={"format": "pdf"})
+
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "pdf_export_unavailable"
+    assert "synthetic renderer failure" not in response.text
+
+
 def test_openapi_exposes_required_versioned_brief_routes(tmp_path) -> None:
     schema = _client(tmp_path).get("/openapi.json").json()
     paths = schema["paths"]
@@ -240,6 +298,13 @@ def test_openapi_exposes_required_versioned_brief_routes(tmp_path) -> None:
     assert "422" in paths["/api/v1/briefs/{brief_id}"]["get"]["responses"]
     assert "422" in paths["/api/v1/briefs/{brief_id}/qa"]["get"]["responses"]
     assert "422" in paths["/api/v1/briefs/{brief_id}/export"]["get"]["responses"]
+    export_content = paths["/api/v1/briefs/{brief_id}/export"]["get"]["responses"]["200"]["content"]
+    assert set(export_content) == {"application/json", "text/markdown", "application/pdf"}
+    export_schema = export_content["application/json"]["schema"]
+    response_refs = {
+        item["$ref"].rsplit("/", 1)[-1] for item in export_schema["anyOf"] if "$ref" in item
+    }
+    assert response_refs == {"BriefExportResponse", "BriefExportDocument"}
     assert paths["/api/v1/briefs"]["post"]["responses"]["422"]["content"]["application/json"][
         "schema"
     ]["$ref"].endswith("/ErrorResponse")

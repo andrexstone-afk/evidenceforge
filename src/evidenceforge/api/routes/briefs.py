@@ -1,12 +1,12 @@
 """Persistence-backed brief API routes."""
 
 from datetime import UTC, datetime
-from typing import Annotated, Literal
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Request, status
+from fastapi import APIRouter, Depends, Query, Request, Response, status
 
-from evidenceforge.api.dependencies import get_brief_repository
+from evidenceforge.api.dependencies import get_brief_export_service, get_brief_repository
 from evidenceforge.api.schemas import (
     BriefCreateRequest,
     BriefCreateResponse,
@@ -19,9 +19,12 @@ from evidenceforge.api.schemas import (
 from evidenceforge.core.safety import validate_no_phi_artifact, validate_population_question
 from evidenceforge.db.repository import BriefRepository
 from evidenceforge.db.schemas import BriefPersistenceInput
+from evidenceforge.exporters import BriefExportDocument
+from evidenceforge.services.brief_exports import BriefExportService, ExportFormat
 
 router = APIRouter(prefix="/api/v1/briefs", tags=["briefs"])
 RepositoryDependency = Annotated[BriefRepository, Depends(get_brief_repository)]
+ExportServiceDependency = Annotated[BriefExportService, Depends(get_brief_export_service)]
 
 
 @router.post(
@@ -105,24 +108,66 @@ def get_brief_qa(brief_id: UUID, repository: RepositoryDependency) -> BriefQARes
 
 @router.get(
     "/{brief_id}/export",
-    response_model=BriefExportResponse,
+    response_model=BriefExportResponse | BriefExportDocument,
     responses={
+        200: {
+            "description": "Canonical reviewed brief artifact",
+            "content": {
+                "application/json": {
+                    "schema": {
+                        "anyOf": [
+                            {"$ref": "#/components/schemas/BriefExportResponse"},
+                            {"$ref": "#/components/schemas/BriefExportDocument"},
+                        ]
+                    }
+                },
+                "text/markdown": {},
+                "application/pdf": {},
+            },
+        },
         404: {"model": ErrorResponse},
         422: {"model": ErrorResponse, "description": "Invalid identifier or format"},
+        503: {"model": ErrorResponse, "description": "PDF renderer unavailable"},
     },
+    response_class=Response,
 )
 def export_brief(
     brief_id: UUID,
     repository: RepositoryDependency,
-    export_format: Annotated[Literal["json"], Query(alias="format")] = "json",
-) -> BriefExportResponse:
-    """Return the currently supported lossless JSON export envelope."""
+    service: ExportServiceDependency,
+    export_format: Annotated[ExportFormat, Query(alias="format")] = ExportFormat.JSON,
+    download: Annotated[
+        bool,
+        Query(
+            description=("Download canonical JSON instead of the backward-compatible JSON envelope")
+        ),
+    ] = False,
+) -> Response:
+    """Return stable JSON or download a canonical JSON, Markdown, or PDF artifact."""
 
     brief_key = str(brief_id)
-    stored = repository.get(brief_key)
-    return BriefExportResponse(
-        brief_id=brief_key,
-        format=export_format,
-        media_type="application/json",
-        content=stored.aggregate.model_dump(mode="json"),
+    if export_format is ExportFormat.JSON and not download:
+        stored = repository.get(brief_key)
+        payload = BriefExportResponse(
+            brief_id=brief_key,
+            format="json",
+            media_type="application/json",
+            content=stored.aggregate.model_dump(mode="json"),
+        )
+        return Response(
+            content=payload.model_dump_json(),
+            media_type="application/json",
+        )
+
+    rendered = service.render(brief_key, export_format)
+    repository.record_export(
+        brief_key,
+        export_format=export_format.value,
+        storage_reference="api-download",
+    )
+    filename = f"evidenceforge-{brief_key}.{rendered.extension}"
+    return Response(
+        content=rendered.content,
+        media_type=rendered.media_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )

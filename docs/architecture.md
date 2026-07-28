@@ -97,3 +97,26 @@ through external retrieval and synthesis is a later integration. Core provenance
 normalized while a validated aggregate snapshot preserves exact round-trip fidelity.
 See [API v1](api.md), [database design](database.md), and
 [ADR 0004](adr/0004-normalized-sqlite-persistence.md).
+
+## Reviewed export boundary
+
+```mermaid
+flowchart LR
+    API[FastAPI export route] --> ES[Brief export service]
+    CLI[Typer export command] --> ES
+    ES --> Repo[Validated persisted aggregate]
+    Repo --> Doc[Versioned canonical export document]
+    Doc --> JSON[Lossless JSON]
+    Doc --> MD[Metatagged inert Markdown]
+    Doc --> HTML[Escaped self-contained HTML]
+    HTML --> PDF[Network-isolated PDF backend]
+    ES --> Meta[Export metadata only]
+    Meta --> DB[(SQLite)]
+```
+
+The API and CLI share one service, so format selection cannot silently change the
+underlying reviewed artifact. JSON is lossless; Markdown retains YAML metatags and the
+human-readable provenance graph; PDF presents the reviewed subset with source IDs,
+supporting passages, terminology provenance, QA, and revision history. PDF rendering
+blocks resource fetches. Export bytes are not stored in SQLite, and the CLI does not
+persist user-supplied file paths. See [reviewed brief exports](exports.md).

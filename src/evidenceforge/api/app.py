@@ -20,6 +20,8 @@ from evidenceforge.api.schemas import ErrorDetail, ErrorResponse
 from evidenceforge.core.safety import UnsafeClinicalQuestionError
 from evidenceforge.db.repository import BriefNotFoundError, BriefRepository
 from evidenceforge.db.session import create_engine_for_url, create_session_factory
+from evidenceforge.exporters import PDFBackend, PDFExportError
+from evidenceforge.services.brief_exports import BriefExportService
 from evidenceforge.settings import Settings, get_settings
 
 logger = structlog.get_logger(__name__)
@@ -67,6 +69,7 @@ def create_app(
     *,
     repository: BriefRepository | None = None,
     settings: Settings | None = None,
+    pdf_backend: PDFBackend | None = None,
 ) -> FastAPI:
     """Create the API application with explicitly injectable dependencies."""
 
@@ -83,6 +86,10 @@ def create_app(
         ),
     )
     application.state.brief_repository = repository
+    application.state.brief_export_service = BriefExportService(
+        repository,
+        pdf_backend=pdf_backend,
+    )
     application.add_middleware(CorrelationIdMiddleware)
     application.include_router(briefs_router)
 
@@ -148,6 +155,20 @@ def create_app(
             status_code=503,
             code="persistence_unavailable",
             message="Brief persistence is temporarily unavailable.",
+        )
+
+    @application.exception_handler(PDFExportError)
+    async def pdf_export_error(request: Request, error: PDFExportError) -> JSONResponse:
+        logger.error(
+            "pdf_export_error",
+            correlation_id=request.state.correlation_id,
+            error_type=type(error).__name__,
+        )
+        return _error_response(
+            request,
+            status_code=503,
+            code="pdf_export_unavailable",
+            message="PDF export is temporarily unavailable.",
         )
 
     @application.get("/api/v1/health", response_model=HealthResponse, tags=["system"])

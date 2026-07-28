@@ -1,18 +1,25 @@
 """EvidenceForge command-line interface."""
 
 import asyncio
+import os
+import tempfile
 from pathlib import Path
 from typing import Annotated
+from uuid import UUID
 
 import typer
 import uvicorn
+from sqlalchemy.exc import SQLAlchemyError
 
 from evidenceforge import __version__
 from evidenceforge.clients.terminology import ICD10CMClient, RxNormClient
 from evidenceforge.clients.terminology.base import TerminologyClientError
-from evidenceforge.exporters import render_markdown
+from evidenceforge.db.repository import BriefNotFoundError, BriefRepository
+from evidenceforge.db.session import create_engine_for_url, create_session_factory
+from evidenceforge.exporters import PDFExportError, render_markdown
 from evidenceforge.llm import LLMProvider, MockLLMProvider, OpenAIProvider
 from evidenceforge.pipelines import CodedBriefPipeline
+from evidenceforge.services.brief_exports import BriefExportService, ExportFormat
 from evidenceforge.settings import get_settings
 
 app = typer.Typer(
@@ -123,6 +130,108 @@ async def _create_brief(*, question: str, output: Path | None) -> None:
     else:
         output.write_text(markdown, encoding="utf-8")
         typer.echo(f"Wrote {output}")
+
+
+@brief_app.command("export")
+def export_brief(
+    brief_id: Annotated[
+        UUID,
+        typer.Option("--brief-id", help="Persisted brief UUID."),
+    ],
+    export_format: Annotated[
+        ExportFormat,
+        typer.Option("--format", help="Artifact format: json, markdown, or pdf."),
+    ],
+    output: Annotated[
+        Path,
+        typer.Option("--output", "-o", help="Destination file."),
+    ],
+    force: Annotated[
+        bool,
+        typer.Option("--force", help="Replace an existing output file."),
+    ] = False,
+) -> None:
+    """Export a persisted reviewed brief to JSON, Markdown, or PDF."""
+
+    if output.is_dir():
+        raise typer.BadParameter(f"Output path is a directory: {output}")
+    if output.exists() and not force:
+        raise typer.BadParameter(f"Output already exists: {output}; pass --force to replace it")
+    settings = get_settings()
+    repository = BriefRepository(
+        create_session_factory(create_engine_for_url(settings.database_url))
+    )
+    try:
+        rendered = BriefExportService(repository).render(str(brief_id), export_format)
+        _write_export_transactionally(
+            repository=repository,
+            brief_id=str(brief_id),
+            export_format=export_format,
+            output=output,
+            content=rendered.content,
+            force=force,
+        )
+    except BriefNotFoundError as error:
+        raise typer.BadParameter(f"Brief does not exist: {error}") from error
+    except PDFExportError as error:
+        raise typer.BadParameter(str(error)) from error
+    except SQLAlchemyError as error:
+        raise typer.BadParameter(
+            "Brief database is unavailable; run the documented migrations first"
+        ) from error
+    except FileExistsError as error:
+        raise typer.BadParameter(
+            f"Output already exists: {output}; pass --force to replace it"
+        ) from error
+    except OSError as error:
+        raise typer.BadParameter(f"Could not write export: {error}") from error
+    typer.echo(f"Wrote {export_format.value} export to {output}")
+
+
+def _write_export_transactionally(
+    *,
+    repository: BriefRepository,
+    brief_id: str,
+    export_format: ExportFormat,
+    output: Path,
+    content: bytes,
+    force: bool,
+) -> None:
+    """Restore the filesystem if export-metadata persistence does not commit."""
+
+    backup: Path | None = None
+    output_created = False
+    try:
+        if output.is_dir():
+            raise IsADirectoryError(output)
+        if output.exists() or output.is_symlink():
+            if not force:
+                raise FileExistsError(output)
+            descriptor, backup_name = tempfile.mkstemp(
+                prefix=f".{output.name}.",
+                suffix=".backup",
+                dir=output.parent,
+            )
+            os.close(descriptor)
+            backup = Path(backup_name)
+            output.replace(backup)
+        with output.open("xb") as stream:
+            output_created = True
+            stream.write(content)
+        repository.record_export(
+            brief_id,
+            export_format=export_format.value,
+            storage_reference="local-cli-output",
+        )
+    except Exception:
+        if output_created:
+            output.unlink(missing_ok=True)
+        if backup is not None and backup.exists():
+            backup.replace(output)
+        raise
+    else:
+        if backup is not None:
+            backup.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

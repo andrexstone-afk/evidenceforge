@@ -65,6 +65,24 @@ In adults with neovascular age-related macular degeneration, how does aflibercep
 
 This Phase 1 artifact structures the question and validates terminology mappings. It does not retrieve or synthesize clinical evidence.
 
+## Phase 5 reviewed export path
+
+This checked-in file remains the Phase 1 terminology example and must not be mistaken
+for a clinical evidence review. After a complete validated synthesis/QA aggregate is
+persisted, its stable brief ID can be exported without another external or LLM call:
+
+```bash
+uv run evidenceforge brief export \
+  --brief-id <persisted-brief-uuid> \
+  --format markdown \
+  --output amd-reviewed-brief.md
+```
+
+The reviewed JSON, Markdown, and PDF formats retain service-selected codes, retrieved
+source identities, claim-supporting passages, final QA status, uncertainty, and revision
+history. Automated export tests use explicitly synthetic evidence and do not introduce
+new clinical claims into this example.
+
 ## Generation metadata
 
 - Provider: mock

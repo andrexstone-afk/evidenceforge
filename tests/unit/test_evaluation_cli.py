@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+from click import unstyle
 from typer.testing import CliRunner
 
 from evidenceforge.cli.app import app
@@ -55,10 +56,11 @@ def test_evaluation_cli_does_not_overwrite_without_force(tmp_path: Path) -> None
             "--output",
             str(output_path),
         ],
+        terminal_width=40,
     )
 
     assert result.exit_code != 0
-    assert "pass --force" in result.output
+    assert "pass --force" in _plain_output(result.output)
     assert output_path.read_text(encoding="utf-8") == "preserve"
 
 
@@ -79,5 +81,9 @@ def test_evaluation_cli_rejects_invalid_json_without_traceback(tmp_path: Path) -
     )
 
     assert result.exit_code != 0
-    assert "Invalid evaluation input" in result.output
+    assert "Invalid evaluation input" in _plain_output(result.output)
     assert "Traceback" not in result.output
+
+
+def _plain_output(value: str) -> str:
+    return " ".join(unstyle(value).replace("│", " ").split())

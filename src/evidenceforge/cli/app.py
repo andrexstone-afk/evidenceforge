@@ -1,6 +1,7 @@
 """EvidenceForge command-line interface."""
 
 import asyncio
+import json
 import os
 import tempfile
 from pathlib import Path
@@ -9,15 +10,19 @@ from uuid import UUID
 
 import typer
 import uvicorn
+from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
 from evidenceforge import __version__
 from evidenceforge.clients.terminology import ICD10CMClient, RxNormClient
 from evidenceforge.clients.terminology.base import TerminologyClientError
+from evidenceforge.core.safety import UnsafeClinicalQuestionError, validate_no_phi_artifact
 from evidenceforge.db.repository import BriefNotFoundError, BriefRepository
 from evidenceforge.db.session import create_engine_for_url, create_session_factory
+from evidenceforge.evaluation import score_evaluation
 from evidenceforge.exporters import PDFExportError, render_markdown
 from evidenceforge.llm import LLMProvider, MockLLMProvider, OpenAIProvider
+from evidenceforge.models.evaluation import EvaluationReport, EvaluationRun
 from evidenceforge.pipelines import CodedBriefPipeline
 from evidenceforge.services.brief_exports import BriefExportService, ExportFormat
 from evidenceforge.settings import get_settings
@@ -28,7 +33,11 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 brief_app = typer.Typer(help="Create and inspect coded clinical briefs.")
+evaluation_app = typer.Typer(help="Score validated evaluation runs.")
 app.add_typer(brief_app, name="brief")
+app.add_typer(evaluation_app, name="evaluation")
+
+MAX_EVALUATION_INPUT_BYTES = 10 * 1024 * 1024
 
 
 @app.command()
@@ -232,6 +241,105 @@ def _write_export_transactionally(
     else:
         if backup is not None:
             backup.unlink(missing_ok=True)
+
+
+@evaluation_app.command("score")
+def score_evaluation_run(
+    input_path: Annotated[
+        Path,
+        typer.Option("--input", help="Validated evaluation-run JSON input."),
+    ],
+    output: Annotated[
+        Path,
+        typer.Option("--output", "-o", help="Destination JSON report."),
+    ],
+    force: Annotated[
+        bool,
+        typer.Option("--force", help="Replace an existing output file."),
+    ] = False,
+) -> None:
+    """Score one aligned evaluation run without network or model calls."""
+
+    if output.is_dir():
+        raise typer.BadParameter(f"Output path is a directory: {output}")
+    if output.exists() and not force:
+        raise typer.BadParameter(f"Output already exists: {output}; pass --force to replace it")
+    try:
+        if input_path.stat().st_size > MAX_EVALUATION_INPUT_BYTES:
+            raise typer.BadParameter("Evaluation input exceeds the 10 MiB safety limit")
+        serialized = input_path.read_text(encoding="utf-8")
+        validate_no_phi_artifact(serialized)
+        run = EvaluationRun.model_validate_json(serialized)
+        report = score_evaluation(run, tool_version=__version__)
+        _write_evaluation_report(
+            output=output,
+            content=report.model_dump_json(indent=2) + "\n",
+            force=force,
+        )
+    except FileNotFoundError as error:
+        raise typer.BadParameter(f"Evaluation input does not exist: {input_path}") from error
+    except UnicodeDecodeError as error:
+        raise typer.BadParameter("Evaluation input must be UTF-8 JSON") from error
+    except UnsafeClinicalQuestionError as error:
+        raise typer.BadParameter(str(error)) from error
+    except ValidationError as error:
+        raise typer.BadParameter(
+            "Invalid evaluation input; see docs/evaluation.md for the versioned contract"
+        ) from error
+    except FileExistsError as error:
+        raise typer.BadParameter(
+            f"Output already exists: {output}; pass --force to replace it"
+        ) from error
+    except OSError as error:
+        raise typer.BadParameter(
+            f"Could not read or write evaluation artifacts: {error}"
+        ) from error
+    typer.echo(f"Wrote evaluation report to {output}")
+
+
+@evaluation_app.command("schema")
+def show_evaluation_schema() -> None:
+    """Print the versioned evaluation input and report JSON Schemas."""
+
+    typer.echo(
+        json.dumps(
+            {
+                "evaluation_run": EvaluationRun.model_json_schema(),
+                "evaluation_report": EvaluationReport.model_json_schema(),
+            },
+            indent=2,
+        )
+    )
+
+
+def _write_evaluation_report(*, output: Path, content: str, force: bool) -> None:
+    """Write a report without partial forced replacements or silent overwrites."""
+
+    if not force:
+        created = False
+        try:
+            with output.open("x", encoding="utf-8") as stream:
+                created = True
+                stream.write(content)
+        except Exception:
+            if created:
+                output.unlink(missing_ok=True)
+            raise
+        return
+
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{output.name}.",
+        suffix=".tmp",
+        dir=output.parent,
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            stream.write(content)
+        temporary.replace(output)
+    except Exception:
+        temporary.unlink(missing_ok=True)
+        raise
 
 
 if __name__ == "__main__":

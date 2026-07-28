@@ -104,6 +104,7 @@ that it remains in untrusted user data and never enters system-prompt authority.
   relationship or unit is semantically correct.
 - The scripted provider and all Phase 3 evidence fixtures are synthetic. No clinical
   performance claim or evaluation metric is implied.
-- Phase 4 persists and exposes completed QA artifacts through API read/QA/JSON
-  surfaces. Question-to-brief API/CLI orchestration, Markdown/PDF export, and
-  physician-reviewed evaluation remain later work.
+- Phase 4 persists completed QA artifacts, and Phase 5 exposes reviewed
+  JSON/Markdown/PDF exports and the evidence-review interface. Phase 6 now defines the
+  evaluation contract and scoring engine; the physician-reviewed benchmark remains
+  later work.

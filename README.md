@@ -10,14 +10,17 @@ synthesis visible rather than presenting an opaque answer.
 
 ## Project status
 
-**Phase 5 — export and interface.** The package includes the Phase 1
+**Phase 6 — evaluation foundation.** The package includes the Phase 1
 question-to-coded-Markdown slice, Phase 2 PubMed/ClinicalTrials.gov v2 retrieval, and
 Phase 3 structured synthesis with claim-level QA and auditable revision. Phase 4 adds a
 normalized SQLite schema, migrations, transactional artifact persistence, and stable
 versioned API. Phase 5 now provides lossless JSON, metatagged Markdown, and reviewed PDF
 exports through the API and CLI plus a Streamlit interface for inspecting completed
-reviewed artifacts. High-severity QA issues cannot auto-pass. The API currently ingests
-completed validated artifacts; question-to-brief API orchestration remains later work.
+reviewed artifacts. Phase 6 now has a provenance-bearing evaluation contract and
+deterministic metric engine; the cardiometabolic and rare-disease examples and
+physician-reviewed benchmark remain in progress. High-severity QA issues cannot
+auto-pass. The API currently ingests completed validated artifacts; question-to-brief
+API orchestration remains later work.
 
 ## Planned pipeline
 
@@ -108,6 +111,19 @@ uv run evidenceforge brief export \
   --output reviewed-brief.md
 ```
 
+Score a validated, aligned evaluation run without an external call:
+
+```bash
+uv run evidenceforge evaluation score \
+  --input evaluation-run.json \
+  --output evaluation-report.json
+```
+
+Evaluation reports preserve dataset and reviewer provenance, system/model/prompt
+versions, metric definitions and denominators, limitations, latency, cost basis, and an
+input digest. See the [evaluation design](docs/evaluation.md). No physician-reviewed
+benchmark results are committed yet.
+
 PubMed requests require `EVIDENCEFORGE_NCBI_EMAIL` so the client can send NCBI's
 required maintainer contact parameter. `EVIDENCEFORGE_NCBI_API_KEY` is optional. Live
 evidence checks are opt-in:
@@ -123,6 +139,7 @@ CLI boundaries, and an injectable transactional repository. Terminology and evid
 clients are async, allowlisted, and replaceable. See [architecture](docs/architecture.md),
 [database design](docs/database.md), [API v1](docs/api.md),
 [export design](docs/exports.md),
+[evaluation design](docs/evaluation.md),
 [claim-level QA design](docs/qa-design.md), [safety](docs/safety.md), and
 [security policy](SECURITY.md).
 
@@ -135,7 +152,9 @@ clients are async, allowlisted, and replaceable. See [architecture](docs/archite
 - Phase 3: complete — structured synthesis, claim-source linking, QA, and revision
 - Phase 4: complete — normalized persistence and stable API contracts
 - Phase 5: complete — JSON/Markdown/PDF exports and Streamlit evidence-review interface
-- Phase 6+: evaluation, generalization, and portfolio release
+- Phase 6: in progress — deterministic evaluation contract complete; generalization
+  examples and physician-reviewed benchmark pending
+- Phase 7: planned — portfolio documentation, release, and interview-ready walkthrough
 
 ## License and contributing
 

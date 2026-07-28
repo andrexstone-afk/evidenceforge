@@ -1,0 +1,16 @@
+[browser]
+gatherUsageStats = false
+
+[client]
+showErrorDetails = "none"
+showErrorLinks = false
+
+[server]
+headless = true
+
+[theme]
+base = "light"
+primaryColor = "#166534"
+backgroundColor = "#F8FAFC"
+secondaryBackgroundColor = "#E2E8F0"
+textColor = "#0F172A"

@@ -8,6 +8,7 @@ depend on those interfaces rather than vendor SDKs.
 flowchart TB
     CLI[Typer CLI] --> Pipeline[Pipeline services]
     API[FastAPI API] --> Store[Repository layer]
+    UI[Streamlit review interface] --> API
     Pipeline --> Store
     Pipeline --> Terminology[Terminology client protocols]
     Pipeline --> Evidence[Evidence client protocols]
@@ -120,3 +121,32 @@ human-readable provenance graph; PDF presents the reviewed subset with source ID
 supporting passages, terminology provenance, QA, and revision history. PDF rendering
 blocks resource fetches. Export bytes are not stored in SQLite, and the CLI does not
 persist user-supplied file paths. See [reviewed brief exports](exports.md).
+
+## Streamlit review boundary
+
+```mermaid
+sequenceDiagram
+    participant Viewer
+    participant UI as Streamlit
+    participant Client as Typed API client
+    participant API as FastAPI v1
+
+    Viewer->>UI: Enter persisted brief UUID
+    UI->>UI: Validate UUID
+    UI->>Client: Load health, brief, and QA
+    Client->>API: GET versioned endpoints
+    API-->>Client: Validated JSON contracts
+    Client->>Client: Revalidate Pydantic schemas
+    Client-->>UI: Typed reviewed artifacts
+    UI-->>Viewer: PICO, mappings, evidence, claims, QA, revision
+    Viewer->>UI: Prepare reviewed exports
+    UI->>Client: Request JSON, Markdown, PDF
+    Client->>Client: Verify response media types
+    Client-->>UI: Download bytes
+```
+
+The API origin is immutable environment configuration rather than browser input, which
+prevents the UI from becoming a server-side request proxy. The interface accepts only a
+brief UUID, makes no terminology/evidence/LLM calls, revalidates API responses, and
+normalizes failures without exposing response bodies. Retrieved and generated strings
+are rendered as data without unsafe HTML. See [Streamlit interface](streamlit.md).

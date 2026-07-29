@@ -17,11 +17,10 @@ normalized SQLite schema, migrations, transactional artifact persistence, and st
 versioned API. Phase 5 now provides lossless JSON, metatagged Markdown, and reviewed PDF
 exports through the API and CLI plus a Streamlit interface for inspecting completed
 reviewed artifacts. Phase 6 now has a provenance-bearing evaluation contract,
-deterministic metric engine, and a cardiometabolic terminology-coded seed; full
-cardiometabolic evidence synthesis, the rare-disease example, and the physician-reviewed
-benchmark remain in progress. High-severity QA issues cannot auto-pass. The API
-currently ingests completed validated artifacts; question-to-brief API orchestration
-remains later work.
+deterministic metric engine, and cardiometabolic and rare-disease terminology-coded
+seeds; full cross-domain evidence examples and the physician-reviewed benchmark remain
+in progress. High-severity QA issues cannot auto-pass. The API currently ingests
+completed validated artifacts; question-to-brief API orchestration remains later work.
 
 ## Planned pipeline
 
@@ -92,9 +91,10 @@ terminology lookup is live and therefore requires network access.
 Set `EVIDENCEFORGE_LLM_PROVIDER=openai` and `EVIDENCEFORGE_OPENAI_API_KEY` to use the
 production OpenAI adapter. The default mock provider exists for the documented
 [AMD](examples/ophthalmology/amd-coded-brief.md) and
-[cardiometabolic](examples/cardiometabolic/type2-diabetes-coded-brief.md) examples and
-tests; it is not a general clinical parser. The cardiometabolic artifact is a
-terminology-coded question only and does not make a comparative efficacy claim.
+[cardiometabolic](examples/cardiometabolic/type2-diabetes-coded-brief.md), and
+[rare-disease](examples/rare_disease/myasthenia-gravis-coded-brief.md) examples and
+tests; it is not a general clinical parser. The cross-domain artifacts are
+terminology-coded questions only and do not make comparative efficacy claims.
 
 The default suite contract-tests the OpenAI request/structured-response boundary without
 a paid call. Run a credentialed integration smoke test separately before claiming a
@@ -156,9 +156,9 @@ clients are async, allowlisted, and replaceable. See [architecture](docs/archite
 - Phase 3: complete — structured synthesis, claim-source linking, QA, and revision
 - Phase 4: complete — normalized persistence and stable API contracts
 - Phase 5: complete — JSON/Markdown/PDF exports and Streamlit evidence-review interface
-- Phase 6: in progress — deterministic evaluation contract and cardiometabolic
-  coded-brief seed complete; full cardiometabolic evidence synthesis, rare-disease
-  generalization, and physician-reviewed benchmark pending
+- Phase 6: in progress — deterministic evaluation contract plus cardiometabolic and
+  rare-disease coded-brief seeds complete; full cross-domain evidence examples and
+  physician-reviewed benchmark pending
 - Phase 7: planned — portfolio documentation, release, and interview-ready walkthrough
 
 ## License and contributing

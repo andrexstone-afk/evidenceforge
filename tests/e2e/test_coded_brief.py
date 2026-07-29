@@ -5,7 +5,12 @@ from evidenceforge.clients.terminology import ICD10CMClient, RxNormClient
 from evidenceforge.exporters import render_markdown
 from evidenceforge.llm import MockLLMProvider
 from evidenceforge.pipelines import CodedBriefPipeline
-from tests.fixtures.terminology import CARDIOMETABOLIC_ICD_RESPONSE, ICD_RESPONSE, rx_response
+from tests.fixtures.terminology import (
+    CARDIOMETABOLIC_ICD_RESPONSE,
+    ICD_RESPONSE,
+    RARE_DISEASE_ICD_RESPONSE,
+    rx_response,
+)
 
 AMD_QUESTION = (
     "In adults with neovascular age-related macular degeneration, how does aflibercept "
@@ -14,6 +19,10 @@ AMD_QUESTION = (
 CARDIOMETABOLIC_QUESTION = (
     "In adults with type 2 diabetes mellitus without complications, how does semaglutide "
     "compare with empagliflozin for reducing glycated hemoglobin (HbA1c)?"
+)
+RARE_DISEASE_QUESTION = (
+    "In adults with myasthenia gravis without acute exacerbation, how does efgartigimod "
+    "alfa compare with rozanolixizumab for improving activities of daily living?"
 )
 
 
@@ -106,6 +115,54 @@ async def test_cardiometabolic_question_produces_validated_coded_markdown() -> N
     assert comparator.selected is not None
     assert comparator.selected.code == "1545653"
     assert brief.llm_run.model == "deterministic-cardiometabolic-fixture-v1"
+
+
+@pytest.mark.asyncio
+async def test_rare_disease_question_produces_validated_coded_markdown() -> None:
+    def icd_handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.params["terms"] == "myasthenia gravis without acute exacerbation"
+        return httpx.Response(200, json=RARE_DISEASE_ICD_RESPONSE)
+
+    def rx_handler(request: httpx.Request) -> httpx.Response:
+        term = request.url.params["term"]
+        if term == "efgartigimod alfa":
+            return httpx.Response(
+                200,
+                json=rx_response(rxcui="2587717", name=term, score="17.240488052368164"),
+            )
+        assert term == "rozanolixizumab"
+        return httpx.Response(
+            200,
+            json=rx_response(rxcui="2642274", name=term, score="14.127267837524414"),
+        )
+
+    icd10 = ICD10CMClient(transport=httpx.MockTransport(icd_handler))
+    rxnorm = RxNormClient(transport=httpx.MockTransport(rx_handler))
+    try:
+        brief = await CodedBriefPipeline(
+            llm=MockLLMProvider(),
+            icd10=icd10,
+            rxnorm=rxnorm,
+        ).run(RARE_DISEASE_QUESTION, confirmed_no_phi=True)
+    finally:
+        await icd10.aclose()
+        await rxnorm.aclose()
+
+    markdown = render_markdown(brief)
+    condition, intervention, comparator = brief.mappings
+
+    assert "`G70.00`" in markdown
+    assert "`2587717`" in markdown
+    assert "`2642274`" in markdown
+    assert "does not retrieve or synthesize clinical evidence" in markdown
+    assert condition.selected is not None
+    assert condition.selected.code == "G70.00"
+    assert condition.human_review_required is False
+    assert intervention.selected is not None
+    assert intervention.selected.code == "2587717"
+    assert comparator.selected is not None
+    assert comparator.selected.code == "2642274"
+    assert brief.llm_run.model == "deterministic-rare-disease-fixture-v1"
 
 
 @pytest.mark.asyncio

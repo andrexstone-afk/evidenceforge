@@ -49,6 +49,16 @@ class MockLLMProvider:
                         cardiometabolic_pico,
                         "deterministic-cardiometabolic-fixture-v1",
                     ),
+                    (
+                        {
+                            "myasthenia gravis without acute exacerbation",
+                            "efgartigimod alfa",
+                            "rozanolixizumab",
+                            "activities of daily living",
+                        },
+                        rare_disease_pico,
+                        "deterministic-rare-disease-fixture-v1",
+                    ),
                 )
                 if all(term in normalized_prompt for term in item[0])
             ),
@@ -56,8 +66,8 @@ class MockLLMProvider:
         )
         if scenario is None:
             raise ValueError(
-                "The mock provider supports only the documented AMD and cardiometabolic "
-                "examples; configure a production provider for other questions."
+                "The mock provider supports only the documented AMD, cardiometabolic, and "
+                "rare-disease examples; configure a production provider for other questions."
             )
         _, fixture_factory, model_name = scenario
         fixture = self._response or fixture_factory()
@@ -115,5 +125,34 @@ def cardiometabolic_pico() -> PICO:
             "empagliflozin",
             "glycated hemoglobin",
             "HbA1c",
+        ],
+    )
+
+
+def rare_disease_pico() -> PICO:
+    """Return the documented myasthenia gravis comparison fixture."""
+
+    return PICO(
+        population="Adults with myasthenia gravis without acute exacerbation",
+        condition="myasthenia gravis without acute exacerbation",
+        intervention="efgartigimod alfa",
+        comparator="rozanolixizumab",
+        outcomes=["activities of daily living"],
+        ambiguities=[
+            "Antibody status, disease severity, dose, background therapy, and follow-up "
+            "duration are unspecified."
+        ],
+        missing_information=[
+            "antibody status",
+            "baseline disease severity",
+            "time horizon",
+            "dose and treatment schedule",
+            "background therapy",
+        ],
+        normalized_search_terms=[
+            "myasthenia gravis without acute exacerbation",
+            "efgartigimod alfa",
+            "rozanolixizumab",
+            "activities of daily living",
         ],
     )

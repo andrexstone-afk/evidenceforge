@@ -10,7 +10,9 @@
   responses, and 5xx responses; malformed JSON becomes a domain-specific error
 - Limits: `count` supports up to 500; total retrieval is limited to 7,500
 - Licensing: public NLM service; do not infer codes absent from its response
-- Verified: 2026-07-24 against the official documentation and live AMD query
+- Verified: 2026-07-24 against the official documentation and live AMD query.
+  Reverified 2026-07-29 with the exact cardiometabolic condition query; the service
+  returned `E11.9` first and `E11.A` as the remission alternative.
 
 ## NLM RxNav — RxNorm
 
@@ -21,7 +23,9 @@
   deduplication, preservation of service order and alternatives
 - Licensing: RxNorm is non-proprietary; NLM does not endorse this project
 - Verified: 2026-07-24; live service reported RxNorm version `06-Jul-2026` and API
-  version `3.1.354`
+  version `3.1.354`. Reverified 2026-07-29 with live semaglutide and empagliflozin
+  queries; the service returned ingredient RXCUIs `1991302` and `1545653`,
+  respectively.
 
 No terminology data is redistributed. Tests use small synthetic response-shape fixtures.
 

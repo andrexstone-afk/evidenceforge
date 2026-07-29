@@ -26,6 +26,16 @@ ICD_RESPONSE = [
     ],
 ]
 
+CARDIOMETABOLIC_ICD_RESPONSE = [
+    2,
+    ["E11.9", "E11.A"],
+    None,
+    [
+        ["E11.9", "Type 2 diabetes mellitus without complications"],
+        ["E11.A", "Type 2 diabetes mellitus without complications in remission"],
+    ],
+]
+
 
 def rx_response(*, rxcui: str, name: str, score: str) -> dict[str, object]:
     return {

@@ -37,6 +37,11 @@ def test_version_command() -> None:
             "efgartigimod alfa compare with rozanolixizumab for improving activities "
             "of daily living?"
         ),
+        (
+            "In adults with myasthenia gravis without acute exacerbation and with acute "
+            "exacerbation, how does efgartigimod alfa compare with rozanolixizumab for "
+            "improving activities of daily living?"
+        ),
     ],
 )
 async def test_mock_provider_rejects_undocumented_questions(question: str) -> None:

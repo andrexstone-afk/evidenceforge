@@ -52,7 +52,17 @@ class BenchmarkQuestion(BaseModel):
     def validate_question(self) -> Self:
         """Reject PHI-like questions before they enter the review handoff."""
 
-        if looks_like_phi(self.question):
+        publishable_text = "\n".join(
+            (
+                self.case_id,
+                self.clinical_domain,
+                self.question_type,
+                self.question,
+                self.coded_brief_path,
+                *self.review_focus,
+            )
+        )
+        if looks_like_phi(publishable_text):
             raise ValueError("Benchmark questions must not contain patient identifiers")
         return self
 
@@ -79,6 +89,16 @@ class BenchmarkQuestionSet(BaseModel):
     def validate_provenance(self) -> Self:
         """Require honest question-review provenance and unique candidate cases."""
 
+        publishable_metadata = "\n".join(
+            (
+                self.dataset_name,
+                self.dataset_version,
+                self.review_method,
+                *self.limitations,
+            )
+        )
+        if looks_like_phi(publishable_metadata):
+            raise ValueError("Benchmark question sets must not contain patient identifiers")
         if self.review_status is QuestionSetReviewStatus.PHYSICIAN_REVIEWED and (
             self.reviewer_count < 1 or self.reviewed_at is None
         ):

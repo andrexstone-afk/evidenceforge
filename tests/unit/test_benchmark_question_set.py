@@ -61,6 +61,47 @@ def test_question_set_rejects_duplicate_cases_and_phi() -> None:
         BenchmarkQuestionSet.model_validate(payload)
 
 
+@pytest.mark.parametrize(
+    ("field", "phi_value"),
+    (
+        ("case_id", "mrn-123456"),
+        ("clinical_domain", "Patient MRN 123456"),
+        ("question_type", "Patient MRN 123456"),
+        ("coded_brief_path", "examples/mrn-123456.md"),
+        ("review_focus", ("Review patient MRN 123456.",)),
+    ),
+)
+def test_question_level_publishable_text_rejects_phi(
+    field: str,
+    phi_value: object,
+) -> None:
+    payload = _question_set_payload()
+    payload["questions"][0][field] = phi_value
+
+    with pytest.raises(ValidationError, match="Benchmark questions must not contain"):
+        BenchmarkQuestionSet.model_validate(payload)
+
+
+@pytest.mark.parametrize(
+    ("field", "phi_value"),
+    (
+        ("dataset_name", "Patient MRN 123456"),
+        ("dataset_version", "Patient MRN 123456"),
+        ("review_method", "Reviewed patient MRN 123456"),
+        ("limitations", ("Includes patient MRN 123456.",)),
+    ),
+)
+def test_question_set_publishable_metadata_rejects_phi(
+    field: str,
+    phi_value: object,
+) -> None:
+    payload = _question_set_payload()
+    payload[field] = phi_value
+
+    with pytest.raises(ValidationError, match="Benchmark question sets must not contain"):
+        BenchmarkQuestionSet.model_validate(payload)
+
+
 def _question_set_payload() -> dict[str, object]:
     return BenchmarkQuestionSet.model_validate_json(
         QUESTION_SET_PATH.read_text(encoding="utf-8")

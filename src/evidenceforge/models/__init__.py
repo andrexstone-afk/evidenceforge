@@ -2,6 +2,8 @@
 
 from evidenceforge.models.brief import CodedBrief
 from evidenceforge.models.evaluation import (
+    BenchmarkQuestion,
+    BenchmarkQuestionSet,
     ClaimEvaluation,
     DatasetReviewStatus,
     EvaluationCase,
@@ -11,6 +13,7 @@ from evidenceforge.models.evaluation import (
     MappingEvaluation,
     MeanMetric,
     PICOReference,
+    QuestionSetReviewStatus,
     RatioMetric,
     RetrievalEvaluation,
     RetrievalPrecisionMetric,
@@ -50,6 +53,8 @@ from evidenceforge.models.qa import (
 
 __all__ = [
     "PICO",
+    "BenchmarkQuestion",
+    "BenchmarkQuestionSet",
     "Claim",
     "ClaimAssessment",
     "ClaimEvaluation",
@@ -80,6 +85,7 @@ __all__ = [
     "QAReviewerOutput",
     "QASeverity",
     "QAStatus",
+    "QuestionSetReviewStatus",
     "RatioMetric",
     "RetrievalEvaluation",
     "RetrievalPrecisionMetric",

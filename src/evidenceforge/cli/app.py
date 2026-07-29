@@ -23,7 +23,7 @@ from evidenceforge.db.session import create_engine_for_url, create_session_facto
 from evidenceforge.evaluation import score_evaluation
 from evidenceforge.exporters import PDFExportError, render_markdown
 from evidenceforge.llm import LLMProvider, MockLLMProvider, OpenAIProvider
-from evidenceforge.models.evaluation import EvaluationReport, EvaluationRun
+from evidenceforge.models.evaluation import BenchmarkQuestionSet, EvaluationReport, EvaluationRun
 from evidenceforge.pipelines import CodedBriefPipeline
 from evidenceforge.services.brief_exports import BriefExportService, ExportFormat
 from evidenceforge.settings import get_settings
@@ -314,6 +314,7 @@ def show_evaluation_schema() -> None:
     typer.echo(
         json.dumps(
             {
+                "benchmark_question_set": BenchmarkQuestionSet.model_json_schema(),
                 "evaluation_run": EvaluationRun.model_json_schema(),
                 "evaluation_report": EvaluationReport.model_json_schema(),
             },

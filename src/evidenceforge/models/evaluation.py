@@ -26,6 +26,80 @@ class DatasetReviewStatus(StrEnum):
     PHYSICIAN_REVIEWED = "physician_reviewed"
 
 
+class QuestionSetReviewStatus(StrEnum):
+    """Physician-review maturity of benchmark question selection only."""
+
+    DRAFT = "draft"
+    PHYSICIAN_REVIEWED = "physician_reviewed"
+
+
+class BenchmarkQuestion(BaseModel):
+    """One population-level candidate question awaiting benchmark annotation."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    case_id: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+    clinical_domain: EvaluationText
+    question_type: EvaluationText
+    question: EvaluationQuestion
+    evidence_density_expectation: Literal["unknown"] = "unknown"
+    coded_brief_path: str = Field(
+        pattern=r"^examples/[a-z0-9_/-]+\.md$",
+    )
+    review_focus: tuple[EvaluationText, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_question(self) -> Self:
+        """Reject PHI-like questions before they enter the review handoff."""
+
+        if looks_like_phi(self.question):
+            raise ValueError("Benchmark questions must not contain patient identifiers")
+        return self
+
+
+class BenchmarkQuestionSet(BaseModel):
+    """Versioned question-selection handoff with no gold labels or system scores."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    schema_version: Literal["1.0"] = "1.0"
+    dataset_name: EvaluationText
+    dataset_version: EvaluationText
+    review_status: QuestionSetReviewStatus
+    review_scope: Literal["question_selection_only"] = "question_selection_only"
+    review_method: EvaluationText
+    reviewer_count: int = Field(ge=0)
+    reviewed_at: date | None = None
+    versioned_at: date
+    limitations: tuple[EvaluationText, ...] = Field(min_length=1)
+    questions: tuple[BenchmarkQuestion, ...] = Field(min_length=1)
+    annotation_status: Literal["no_gold_labels"] = "no_gold_labels"
+
+    @model_validator(mode="after")
+    def validate_provenance(self) -> Self:
+        """Require honest question-review provenance and unique candidate cases."""
+
+        if self.review_status is QuestionSetReviewStatus.PHYSICIAN_REVIEWED and (
+            self.reviewer_count < 1 or self.reviewed_at is None
+        ):
+            raise ValueError("Physician-reviewed question sets require a reviewer and review date")
+        if self.review_status is QuestionSetReviewStatus.DRAFT and (
+            self.reviewer_count or self.reviewed_at is not None
+        ):
+            raise ValueError("Draft question sets cannot claim physician review provenance")
+        if self.reviewed_at is not None and self.reviewed_at > self.versioned_at:
+            raise ValueError("reviewed_at cannot be after the question-set version date")
+        case_ids = [item.case_id for item in self.questions]
+        if len(case_ids) != len(set(case_ids)):
+            raise ValueError("Benchmark question case IDs must be unique")
+        normalized_questions = [
+            " ".join(item.question.split()).casefold() for item in self.questions
+        ]
+        if len(normalized_questions) != len(set(normalized_questions)):
+            raise ValueError("Benchmark questions must be unique")
+        return self
+
+
 class PICOReference(BaseModel):
     """Reviewer-authored PICO components used for exact normalized scoring."""
 

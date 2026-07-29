@@ -39,6 +39,7 @@ def test_evaluation_cli_exposes_versioned_json_schemas() -> None:
 
     assert result.exit_code == 0
     schemas = json.loads(result.stdout)
+    assert schemas["benchmark_question_set"]["properties"]["schema_version"]["const"] == "1.0"
     assert schemas["evaluation_run"]["properties"]["schema_version"]["const"] == "1.0"
     assert schemas["evaluation_report"]["properties"]["scoring_version"]["const"] == "1.0"
 

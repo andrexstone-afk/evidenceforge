@@ -125,8 +125,11 @@ uv run evidenceforge evaluation score \
 
 Evaluation reports preserve dataset and reviewer provenance, system/model/prompt
 versions, metric definitions and denominators, limitations, latency, cost basis, and an
-input digest. See the [evaluation design](docs/evaluation.md). No physician-reviewed
-benchmark results are committed yet.
+input digest. A versioned
+[draft question set](examples/evaluation/benchmark-question-set-v0.1.json) packages the
+three existing cross-domain seeds for physician scope review without gold labels or
+evidence-density claims. See the [evaluation design](docs/evaluation.md). No
+physician-reviewed benchmark results are committed yet.
 
 PubMed requests require `EVIDENCEFORGE_NCBI_EMAIL` so the client can send NCBI's
 required maintainer contact parameter. `EVIDENCEFORGE_NCBI_API_KEY` is optional. Live
@@ -156,9 +159,9 @@ clients are async, allowlisted, and replaceable. See [architecture](docs/archite
 - Phase 3: complete — structured synthesis, claim-source linking, QA, and revision
 - Phase 4: complete — normalized persistence and stable API contracts
 - Phase 5: complete — JSON/Markdown/PDF exports and Streamlit evidence-review interface
-- Phase 6: in progress — deterministic evaluation contract plus cardiometabolic and
-  rare-disease coded-brief seeds complete; full cross-domain evidence examples and
-  physician-reviewed benchmark pending
+- Phase 6: in progress — deterministic evaluation contract, draft question-selection
+  handoff, and cardiometabolic/rare-disease coded-brief seeds complete; full
+  cross-domain evidence examples and physician-reviewed benchmark pending
 - Phase 7: planned — portfolio documentation, release, and interview-ready walkthrough
 
 ## License and contributing

@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "dataset_name": "EvidenceForge cross-domain benchmark starter",
+  "dataset_version": "0.1",
+  "review_status": "draft",
+  "review_scope": "question_selection_only",
+  "review_method": "Unreviewed starter set assembled from existing service-verified terminology examples for physician scope review.",
+  "reviewer_count": 0,
+  "reviewed_at": null,
+  "versioned_at": "2026-07-29",
+  "limitations": [
+    "Question selection has not been physician reviewed.",
+    "The set contains no gold PICO, terminology, retrieval, claim-support, or numeric-consistency labels.",
+    "Evidence density remains unknown until retrieval and review.",
+    "Three starter questions do not satisfy the planned 15 to 30 question benchmark."
+  ],
+  "questions": [
+    {
+      "case_id": "ophthalmology-amd-drug-comparison",
+      "clinical_domain": "ophthalmology",
+      "question_type": "drug comparison",
+      "question": "In adults with neovascular age-related macular degeneration, how does aflibercept compare with ranibizumab for improving visual acuity?",
+      "evidence_density_expectation": "unknown",
+      "coded_brief_path": "examples/ophthalmology/amd-coded-brief.md",
+      "review_focus": [
+        "Confirm whether laterality, lesion activity, prior-treatment status, treatment regimen, and time horizon should be specified."
+      ]
+    },
+    {
+      "case_id": "cardiometabolic-type2-diabetes-drug-comparison",
+      "clinical_domain": "cardiometabolic",
+      "question_type": "drug comparison",
+      "question": "In adults with type 2 diabetes mellitus without complications, how does semaglutide compare with empagliflozin for reducing glycated hemoglobin (HbA1c)?",
+      "evidence_density_expectation": "unknown",
+      "coded_brief_path": "examples/cardiometabolic/type2-diabetes-coded-brief.md",
+      "review_focus": [
+        "Confirm whether dose, formulation, background glucose-lowering therapy, and time horizon should be specified."
+      ]
+    },
+    {
+      "case_id": "rare-disease-myasthenia-gravis-drug-comparison",
+      "clinical_domain": "rare disease",
+      "question_type": "drug comparison",
+      "question": "In adults with myasthenia gravis without acute exacerbation, how does efgartigimod alfa compare with rozanolixizumab for improving activities of daily living?",
+      "evidence_density_expectation": "unknown",
+      "coded_brief_path": "examples/rare_disease/myasthenia-gravis-coded-brief.md",
+      "review_focus": [
+        "Confirm whether antibody status, baseline disease severity, dose, background therapy, and time horizon should be specified."
+      ]
+    }
+  ],
+  "annotation_status": "no_gold_labels"
+}

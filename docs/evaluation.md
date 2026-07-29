@@ -24,6 +24,26 @@ The input schema distinguishes `draft`, `synthetic_test`, and `physician_reviewe
 describes annotation provenance only; it does not imply that the dataset is complete,
 publishable, clinically validated, or suitable for a medical-device claim.
 
+## Draft question-selection contract
+
+The versioned
+[`benchmark-question-set-v0.1.json`](../examples/evaluation/benchmark-question-set-v0.1.json)
+is a physician-review handoff, not an `EvaluationRun`. It contains only the three
+existing population-level example questions, links to their terminology-coded
+artifacts, and scope questions for a reviewer. Its contract enforces:
+
+- `review_scope: question_selection_only`;
+- `annotation_status: no_gold_labels`;
+- draft provenance with zero reviewers and no review date;
+- `evidence_density_expectation: unknown` for every question;
+- unique case IDs and questions, PHI screening, and repository-relative artifact paths.
+
+Changing the question-set status to `physician_reviewed` requires a reviewer count and
+review date, but still certifies only question selection. It does not convert the file
+into gold PICO, terminology, retrieval, or claim-support annotations, and the scoring
+command does not accept it. The starter's three questions are deliberately below the
+planned 15–30 case benchmark.
+
 ## Aligned case contract
 
 Each case contains a de-identified population-level question and:
@@ -88,6 +108,10 @@ The report's `input_sha256` binds the metrics to the exact canonicalized validat
 input. `generated_at` records when the report was produced, so two reports may have
 different generation timestamps while retaining the same input digest and metric
 values.
+
+The schema command emits separate `benchmark_question_set`, `evaluation_run`, and
+`evaluation_report` schemas so a question-selection handoff cannot be mistaken for a
+scorable run.
 
 ## Benchmark authoring workflow
 

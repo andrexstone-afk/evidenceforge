@@ -54,12 +54,6 @@ def test_question_set_rejects_duplicate_cases_and_phi() -> None:
     with pytest.raises(ValidationError, match="case IDs must be unique"):
         BenchmarkQuestionSet.model_validate(payload)
 
-    payload = _question_set_payload()
-    payload["questions"][0]["question"] = "Compare treatments for patient MRN 123456."
-
-    with pytest.raises(ValidationError, match="must not contain patient identifiers"):
-        BenchmarkQuestionSet.model_validate(payload)
-
 
 @pytest.mark.parametrize(
     ("field", "phi_value"),
@@ -67,6 +61,7 @@ def test_question_set_rejects_duplicate_cases_and_phi() -> None:
         ("case_id", "mrn-123456"),
         ("clinical_domain", "Patient MRN 123456"),
         ("question_type", "Patient MRN 123456"),
+        ("question", "Compare treatments for patient MRN 123456."),
         ("coded_brief_path", "examples/mrn-123456.md"),
         ("review_focus", ("Review patient MRN 123456.",)),
     ),

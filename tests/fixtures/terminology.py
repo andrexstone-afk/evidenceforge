@@ -36,6 +36,13 @@ CARDIOMETABOLIC_ICD_RESPONSE = [
     ],
 ]
 
+RARE_DISEASE_ICD_RESPONSE = [
+    1,
+    ["G70.00"],
+    None,
+    [["G70.00", "Myasthenia gravis without (acute) exacerbation"]],
+]
+
 
 def rx_response(*, rxcui: str, name: str, score: str) -> dict[str, object]:
     return {

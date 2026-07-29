@@ -32,6 +32,16 @@ def test_version_command() -> None:
             "In adults with type 2 diabetes mellitus with hyperglycemia, how does "
             "semaglutide compare with empagliflozin for reducing glycated hemoglobin?"
         ),
+        (
+            "In adults with myasthenia gravis with acute exacerbation, how does "
+            "efgartigimod alfa compare with rozanolixizumab for improving activities "
+            "of daily living?"
+        ),
+        (
+            "In adults with myasthenia gravis without acute exacerbation and with acute "
+            "exacerbation, how does efgartigimod alfa compare with rozanolixizumab for "
+            "improving activities of daily living?"
+        ),
     ],
 )
 async def test_mock_provider_rejects_undocumented_questions(question: str) -> None:

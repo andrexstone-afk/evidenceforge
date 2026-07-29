@@ -12,7 +12,9 @@
 - Licensing: public NLM service; do not infer codes absent from its response
 - Verified: 2026-07-24 against the official documentation and live AMD query.
   Reverified 2026-07-29 with the exact cardiometabolic condition query; the service
-  returned `E11.9` first and `E11.A` as the remission alternative.
+  returned `E11.9` first and `E11.A` as the remission alternative. The same-day
+  rare-disease query returned `G70.00` for myasthenia gravis without acute
+  exacerbation.
 
 ## NLM RxNav — RxNorm
 
@@ -25,7 +27,8 @@
 - Verified: 2026-07-24; live service reported RxNorm version `06-Jul-2026` and API
   version `3.1.354`. Reverified 2026-07-29 with live semaglutide and empagliflozin
   queries; the service returned ingredient RXCUIs `1991302` and `1545653`,
-  respectively.
+  respectively. Same-day efgartigimod alfa and rozanolixizumab queries returned
+  ingredient RXCUIs `2587717` and `2642274`.
 
 No terminology data is redistributed. Tests use small synthetic response-shape fixtures.
 

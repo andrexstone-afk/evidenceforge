@@ -117,6 +117,28 @@ def test_evaluation_cli_reads_only_through_size_boundary(
     input_path = tmp_path / "oversized.json"
     input_path.write_bytes(b"x" * 9)
     monkeypatch.setattr(cli_module, "MAX_EVALUATION_INPUT_BYTES", 8)
+    original_fdopen = os.fdopen
+    read_sizes: list[int] = []
+
+    class TrackingStream:
+        def __init__(self, stream) -> None:
+            self.stream = stream
+
+        def __enter__(self):
+            self.stream.__enter__()
+            return self
+
+        def __exit__(self, *args):
+            return self.stream.__exit__(*args)
+
+        def read(self, size: int = -1) -> bytes:
+            read_sizes.append(size)
+            return self.stream.read(size)
+
+    def tracked_fdopen(*args, **kwargs):
+        return TrackingStream(original_fdopen(*args, **kwargs))
+
+    monkeypatch.setattr(cli_module.os, "fdopen", tracked_fdopen)
 
     result = CliRunner().invoke(
         app,
@@ -132,6 +154,7 @@ def test_evaluation_cli_reads_only_through_size_boundary(
 
     assert result.exit_code != 0
     assert "exceeds the 10 MiB safety limit" in _plain_output(result.output)
+    assert read_sizes == [9]
 
 
 def _plain_output(value: str) -> str:

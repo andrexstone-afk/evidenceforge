@@ -24,13 +24,23 @@ def test_version_command() -> None:
     assert result.stdout.strip() == "0.1.0"
 
 
-async def test_mock_provider_rejects_unrelated_questions() -> None:
+@pytest.mark.parametrize(
+    "question",
+    [
+        "Does aspirin prevent stroke?",
+        (
+            "In adults with type 2 diabetes mellitus with hyperglycemia, how does "
+            "semaglutide compare with empagliflozin for reducing glycated hemoglobin?"
+        ),
+    ],
+)
+async def test_mock_provider_rejects_undocumented_questions(question: str) -> None:
     provider = MockLLMProvider()
 
     with pytest.raises(ValueError, match="supports only"):
         await provider.generate_structured(
             system_prompt="extract",
-            user_prompt="Does aspirin prevent stroke?",
+            user_prompt=question,
             response_model=PICO,
         )
 

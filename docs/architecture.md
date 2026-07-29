@@ -150,3 +150,21 @@ prevents the UI from becoming a server-side request proxy. The interface accepts
 brief UUID, makes no terminology/evidence/LLM calls, revalidates API responses, and
 normalizes failures without exposing response bodies. Retrieved and generated strings
 are rendered as data without unsafe HTML. See [Streamlit interface](streamlit.md).
+
+## Evaluation boundary
+
+```mermaid
+flowchart LR
+    G[Reviewer-authored references] --> V[Validated EvaluationRun]
+    P[Frozen pipeline predictions] --> V
+    M[Model, prompt, latency, and cost metadata] --> V
+    V --> D[Deterministic metric engine]
+    D --> R[Versioned EvaluationReport]
+    R --> A[Human interpretation with stated limitations]
+```
+
+Evaluation is an offline boundary with no terminology, evidence, or model calls. The
+engine scores only aligned, validated inputs and retains a digest of the full run.
+Synthetic fixtures, draft annotations, and physician-reviewed datasets have distinct
+status labels. Metrics with no eligible observations remain explicitly undefined. See
+[evaluation design](evaluation.md).

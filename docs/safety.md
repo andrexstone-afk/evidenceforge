@@ -41,3 +41,9 @@ redirects, validates response schemas and export media types, and converts failu
 stable messages without reflecting server response bodies. Retrieved and generated
 text is displayed without unsafe HTML. Blocked final QA is presented as an error and is
 never styled as passing.
+
+Evaluation runs are offline aligned artifacts and make no external or model calls. The
+CLI applies the artifact-level PHI screen before validation, limits input size, and
+preserves review status, method, dataset size, metric denominators, and limitations.
+Synthetic evaluation fixtures are labeled separately from physician-reviewed data.
+Neither a review-status label nor a metric report establishes clinical validity.

@@ -39,6 +39,7 @@ app.add_typer(brief_app, name="brief")
 app.add_typer(evaluation_app, name="evaluation")
 
 MAX_EVALUATION_INPUT_BYTES = 10 * 1024 * 1024
+EVALUATION_INPUT_OPEN_FLAGS = os.O_RDONLY | getattr(os, "O_NONBLOCK", 0)
 
 
 @app.command()
@@ -266,7 +267,7 @@ def score_evaluation_run(
     if output.exists() and not force:
         raise typer.BadParameter(f"Output already exists: {output}; pass --force to replace it")
     try:
-        descriptor = os.open(input_path, os.O_RDONLY | os.O_NONBLOCK)
+        descriptor = os.open(input_path, EVALUATION_INPUT_OPEN_FLAGS)
         try:
             if not stat.S_ISREG(os.fstat(descriptor).st_mode):
                 raise typer.BadParameter("Evaluation input must be a regular file")

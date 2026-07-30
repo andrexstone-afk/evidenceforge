@@ -72,3 +72,38 @@ def test_trial_query_records_status_filters(pico: PICO) -> None:
         '"neovascular age-related macular degeneration" AND ("aflibercept" OR "ranibizumab")'
     )
     assert query.filters["overall_status"] == "RECRUITING,ACTIVE_NOT_RECRUITING"
+
+
+def test_cardiometabolic_search_overrides_preserve_coding_condition() -> None:
+    pico = PICO(
+        population="Adults with type 2 diabetes mellitus without complications",
+        condition="type 2 diabetes mellitus without complications",
+        intervention="semaglutide",
+        comparator="empagliflozin",
+        outcomes=["glycated hemoglobin (HbA1c)"],
+        normalized_search_terms=["type 2 diabetes mellitus", "semaglutide", "empagliflozin"],
+    )
+
+    pubmed_query = build_pubmed_query(
+        pico,
+        condition_term="type 2 diabetes mellitus",
+        outcome_terms=("HbA1c",),
+    )
+    trial_query = build_trial_query(
+        pico,
+        condition_term="type 2 diabetes mellitus",
+        direct_comparison=True,
+    )
+
+    assert pico.condition == "type 2 diabetes mellitus without complications"
+    assert pubmed_query.query == (
+        '"type 2 diabetes mellitus"[Title/Abstract] '
+        'AND "semaglutide"[Title/Abstract] '
+        'AND "empagliflozin"[Title/Abstract] '
+        'AND ("HbA1c"[Title/Abstract])'
+    )
+    assert trial_query.query == (
+        'AREA[ConditionSearch]"type 2 diabetes mellitus" '
+        'AND AREA[InterventionName]"semaglutide" '
+        'AND AREA[InterventionName]"empagliflozin"'
+    )

@@ -18,9 +18,10 @@ versioned API. Phase 5 now provides lossless JSON, metatagged Markdown, and revi
 exports through the API and CLI plus a Streamlit interface for inspecting completed
 reviewed artifacts. Phase 6 now has a provenance-bearing evaluation contract,
 deterministic metric engine, and cardiometabolic and rare-disease terminology-coded
-seeds; full cross-domain evidence examples and the physician-reviewed benchmark remain
-in progress. High-severity QA issues cannot auto-pass. The API currently ingests
-completed validated artifacts; question-to-brief API orchestration remains later work.
+seeds plus a verified cardiometabolic retrieval strategy; full cross-domain evidence
+examples and the physician-reviewed benchmark remain in progress. High-severity QA
+issues cannot auto-pass. The API currently ingests completed validated artifacts;
+question-to-brief API orchestration remains later work.
 
 ## Planned pipeline
 
@@ -160,8 +161,9 @@ clients are async, allowlisted, and replaceable. See [architecture](docs/archite
 - Phase 4: complete — normalized persistence and stable API contracts
 - Phase 5: complete — JSON/Markdown/PDF exports and Streamlit evidence-review interface
 - Phase 6: in progress — deterministic evaluation contract, draft question-selection
-  handoff, and cardiometabolic/rare-disease coded-brief seeds complete; full
-  cross-domain evidence examples and physician-reviewed benchmark pending
+  handoff, cardiometabolic/rare-disease coded-brief seeds, and the cardiometabolic
+  retrieval strategy complete; full cross-domain evidence examples and
+  physician-reviewed benchmark pending
 - Phase 7: planned — portfolio documentation, release, and interview-ready walkthrough
 
 ## License and contributing

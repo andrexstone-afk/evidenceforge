@@ -57,8 +57,9 @@ No terminology data is redistributed. Tests use small synthetic response-shape f
   redistribute downloaded abstracts; committed contract fixtures are synthetic.
 - Verified: 2026-07-24 against NCBI documentation updated 2026-03-04. Live execution
   is opt-in and additionally requires `EVIDENCEFORGE_NCBI_EMAIL`. Official PubMed
-  record pages for cardiometabolic candidate sources were inspected on 2026-07-30;
-  the EvidenceForge client was not executed because no maintainer email was configured.
+  record pages for cardiometabolic and rare-disease candidate sources were inspected
+  on 2026-07-30; the EvidenceForge client was not executed because no maintainer email
+  was configured.
 
 ## ClinicalTrials.gov API v2
 
@@ -83,4 +84,7 @@ No terminology data is redistributed. Tests use small synthetic response-shape f
 - Verified: 2026-07-24 against the official API v2 documentation and a live
   credential-free one-record contract check. Reverified 2026-07-30 using the
   allowlisted client and a field-scoped direct cardiometabolic comparison query; the
-  first page included `NCT02863328`.
+  first page included `NCT02863328`. A rare-disease query for either efgartigimod or
+  rozanolixizumab reported 43 records and included `NCT03669588` and `NCT03971422` on
+  its first page. A same-day field-scoped query requiring both interventions reported
+  zero records; that dynamic result is not treated as proof of evidence absence.

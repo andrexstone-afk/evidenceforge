@@ -208,3 +208,102 @@ CARDIOMETABOLIC_CLINICAL_TRIALS_RESPONSE = {
         }
     ],
 }
+
+RARE_DISEASE_PUBMED_SEARCH_RESPONSE = {
+    "header": {"type": "esearch", "version": "0.3"},
+    "esearchresult": {
+        "count": "1",
+        "retmax": "1",
+        "retstart": "0",
+        "idlist": ["44444444"],
+    },
+}
+
+RARE_DISEASE_PUBMED_FETCH_XML = """\
+<?xml version="1.0" encoding="UTF-8"?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation>
+      <PMID Version="1">44444444</PMID>
+      <Article>
+        <Journal>
+          <JournalIssue><PubDate><Year>2025</Year></PubDate></JournalIssue>
+          <Title>Synthetic Neuromuscular Journal</Title>
+        </Journal>
+        <ArticleTitle>Synthetic rare-disease treatment comparison</ArticleTitle>
+        <Abstract>
+          <AbstractText>
+            Efgartigimod, rozanolixizumab, and MG-ADL appear only as synthetic
+            ranking terms. No clinical result is asserted.
+          </AbstractText>
+        </Abstract>
+        <Language>eng</Language>
+        <PublicationTypeList>
+          <PublicationType>Systematic Review</PublicationType>
+        </PublicationTypeList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">44444444</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>
+"""
+
+RARE_DISEASE_CLINICAL_TRIALS_RESPONSE = {
+    "totalCount": 2,
+    "studies": [
+        {
+            "protocolSection": {
+                "identificationModule": {
+                    "nctId": "NCT00000003",
+                    "briefTitle": "Synthetic efgartigimod trial",
+                },
+                "statusModule": {
+                    "overallStatus": "COMPLETED",
+                    "startDateStruct": {"date": "2023-01"},
+                    "completionDateStruct": {"date": "2024-01"},
+                    "lastUpdatePostDateStruct": {"date": "2024-02"},
+                },
+                "designModule": {
+                    "studyType": "INTERVENTIONAL",
+                    "phases": ["PHASE3"],
+                    "designInfo": {"allocation": "RANDOMIZED"},
+                    "enrollmentInfo": {"count": 75, "type": "ACTUAL"},
+                },
+                "conditionsModule": {"conditions": ["Myasthenia gravis"]},
+                "armsInterventionsModule": {
+                    "interventions": [{"type": "DRUG", "name": "Efgartigimod"}]
+                },
+                "outcomesModule": {"primaryOutcomes": [{"measure": "Synthetic MG-ADL outcome"}]},
+            },
+            "hasResults": True,
+        },
+        {
+            "protocolSection": {
+                "identificationModule": {
+                    "nctId": "NCT00000004",
+                    "briefTitle": "Synthetic rozanolixizumab trial",
+                },
+                "statusModule": {
+                    "overallStatus": "COMPLETED",
+                    "startDateStruct": {"date": "2023-02"},
+                    "completionDateStruct": {"date": "2024-02"},
+                    "lastUpdatePostDateStruct": {"date": "2024-03"},
+                },
+                "designModule": {
+                    "studyType": "INTERVENTIONAL",
+                    "phases": ["PHASE3"],
+                    "designInfo": {"allocation": "RANDOMIZED"},
+                    "enrollmentInfo": {"count": 80, "type": "ACTUAL"},
+                },
+                "conditionsModule": {"conditions": ["Myasthenia gravis"]},
+                "armsInterventionsModule": {
+                    "interventions": [{"type": "DRUG", "name": "Rozanolixizumab"}]
+                },
+                "outcomesModule": {"primaryOutcomes": [{"measure": "Synthetic MG-ADL outcome"}]},
+            },
+            "hasResults": True,
+        },
+    ],
+}

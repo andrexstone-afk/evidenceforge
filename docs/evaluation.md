@@ -139,8 +139,9 @@ a clinical-performance table.
 
 ## Current limitations
 
-- Cardiometabolic and rare-disease terminology-coded seeds are committed, but no
-  cross-domain evidence/QA outputs or benchmark labels are committed yet.
+- Cardiometabolic and rare-disease terminology-coded seeds and reproducible retrieval
+  strategy checkpoints are committed, but no reviewed cross-domain evidence sets, QA
+  outputs, or benchmark labels are committed yet.
 - No benchmark case has been labeled `physician_reviewed`.
 - Claim alignment and clinical adjudication remain human-authored inputs.
 - Citation validity confirms membership in the retrieved set; claim-support precision

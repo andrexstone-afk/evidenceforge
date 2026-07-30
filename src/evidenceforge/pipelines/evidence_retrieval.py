@@ -68,6 +68,8 @@ class EvidenceRetrievalPipeline:
         current_year: int,
         page_size: int = 20,
         condition_term: str | None = None,
+        intervention_term: str | None = None,
+        comparator_term: str | None = None,
         outcome_terms: tuple[str, ...] | None = None,
         direct_trial_comparison: bool = False,
     ) -> EvidenceRetrievalResult:
@@ -78,12 +80,16 @@ class EvidenceRetrievalPipeline:
         pubmed_query = build_pubmed_query(
             pico,
             condition_term=condition_term,
+            intervention_term=intervention_term,
+            comparator_term=comparator_term,
             outcome_terms=outcome_terms,
             page_size=page_size,
         )
         trial_query = build_trial_query(
             pico,
             condition_term=condition_term,
+            intervention_term=intervention_term,
+            comparator_term=comparator_term,
             direct_comparison=direct_trial_comparison,
             page_size=page_size,
         )

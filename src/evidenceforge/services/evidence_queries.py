@@ -10,6 +10,8 @@ def build_pubmed_query(
     pico: PICO,
     *,
     condition_term: str | None = None,
+    intervention_term: str | None = None,
+    comparator_term: str | None = None,
     outcome_terms: tuple[str, ...] | None = None,
     date_from: date | None = None,
     date_to: date | None = None,
@@ -19,11 +21,13 @@ def build_pubmed_query(
     """Build a PubMed ESearch expression without hidden source calls."""
 
     condition = pico.condition if condition_term is None else condition_term
+    intervention = pico.intervention if intervention_term is None else intervention_term
+    comparator = pico.comparator if comparator_term is None else comparator_term
     outcomes = tuple(pico.outcomes) if outcome_terms is None else outcome_terms
     concepts = [
         _pubmed_phrase(condition),
-        _pubmed_phrase(pico.intervention),
-        _pubmed_phrase(pico.comparator),
+        _pubmed_phrase(intervention),
+        _pubmed_phrase(comparator),
     ]
     if outcomes:
         concepts.append(f"({' OR '.join(_pubmed_phrase(item) for item in outcomes)})")
@@ -55,6 +59,8 @@ def build_trial_query(
     pico: PICO,
     *,
     condition_term: str | None = None,
+    intervention_term: str | None = None,
+    comparator_term: str | None = None,
     direct_comparison: bool = False,
     overall_status: tuple[str, ...] = (),
     page_size: int = 20,
@@ -62,8 +68,10 @@ def build_trial_query(
     """Build a ClinicalTrials.gov v2 query.term expression."""
 
     condition = _clean_term(pico.condition if condition_term is None else condition_term)
-    intervention = _clean_term(pico.intervention)
-    comparator = _clean_term(pico.comparator)
+    intervention = _clean_term(
+        pico.intervention if intervention_term is None else intervention_term
+    )
+    comparator = _clean_term(pico.comparator if comparator_term is None else comparator_term)
     if direct_comparison:
         query_text = (
             f'AREA[ConditionSearch]"{condition}" '

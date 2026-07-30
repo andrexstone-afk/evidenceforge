@@ -2,7 +2,7 @@ import httpx
 import pytest
 
 from evidenceforge.clients.evidence import ClinicalTrialsClient, PubMedClient
-from evidenceforge.llm.mock import cardiometabolic_pico
+from evidenceforge.llm.mock import cardiometabolic_pico, rare_disease_pico
 from evidenceforge.models.evidence import EvidenceSource
 from evidenceforge.models.pico import PICO
 from evidenceforge.pipelines import EvidenceRetrievalPipeline
@@ -13,6 +13,9 @@ from tests.fixtures.evidence import (
     CLINICAL_TRIALS_RESPONSE,
     PUBMED_FETCH_XML,
     PUBMED_SEARCH_RESPONSE,
+    RARE_DISEASE_CLINICAL_TRIALS_RESPONSE,
+    RARE_DISEASE_PUBMED_FETCH_XML,
+    RARE_DISEASE_PUBMED_SEARCH_RESPONSE,
 )
 
 
@@ -121,6 +124,69 @@ async def test_cardiometabolic_strategy_retrieves_both_sources() -> None:
     assert [record.pmid for record in result.pubmed.records] == ["33333333"]
     assert [record.nct_id for record in result.clinical_trials.records] == ["NCT00000002"]
     assert {item.record_id for item in result.ranking} == {"33333333", "NCT00000002"}
+
+
+@pytest.mark.asyncio
+async def test_rare_disease_strategy_retrieves_both_trial_programs() -> None:
+    observed_queries: dict[str, str] = {}
+
+    def pubmed_handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/esearch.fcgi"):
+            observed_queries["pubmed"] = request.url.params["term"]
+            return httpx.Response(200, json=RARE_DISEASE_PUBMED_SEARCH_RESPONSE)
+        return httpx.Response(200, text=RARE_DISEASE_PUBMED_FETCH_XML)
+
+    def trial_handler(request: httpx.Request) -> httpx.Response:
+        observed_queries["trials"] = request.url.params["query.term"]
+        return httpx.Response(200, json=RARE_DISEASE_CLINICAL_TRIALS_RESPONSE)
+
+    pubmed = PubMedClient(
+        email="maintainer@example.com",
+        transport=httpx.MockTransport(pubmed_handler),
+        min_interval_seconds=0,
+    )
+    trials = ClinicalTrialsClient(
+        transport=httpx.MockTransport(trial_handler),
+        min_interval_seconds=0,
+    )
+    try:
+        result = await EvidenceRetrievalPipeline(
+            pubmed=pubmed,
+            clinical_trials=trials,
+        ).run(
+            rare_disease_pico().model_copy(update={"comparator": "Rozanolixizumab"}),
+            current_year=2026,
+            page_size=20,
+            condition_term="myasthenia gravis",
+            intervention_term="efgartigimod",
+            comparator_term="rozanolixizumab",
+            outcome_terms=("MG-ADL",),
+        )
+    finally:
+        await pubmed.aclose()
+        await trials.aclose()
+
+    assert observed_queries["pubmed"] == (
+        '"myasthenia gravis"[Title/Abstract] '
+        'AND "efgartigimod"[Title/Abstract] '
+        'AND "rozanolixizumab"[Title/Abstract] '
+        'AND ("MG-ADL"[Title/Abstract])'
+    )
+    assert observed_queries["trials"] == (
+        '"myasthenia gravis" AND ("efgartigimod" OR "rozanolixizumab")'
+    )
+    assert observed_queries["pubmed"] == result.pubmed.metadata.query
+    assert observed_queries["trials"] == result.clinical_trials.metadata.query
+    assert [record.pmid for record in result.pubmed.records] == ["44444444"]
+    assert [record.nct_id for record in result.clinical_trials.records] == [
+        "NCT00000003",
+        "NCT00000004",
+    ]
+    assert {item.record_id for item in result.ranking} == {
+        "44444444",
+        "NCT00000003",
+        "NCT00000004",
+    }
 
 
 @pytest.mark.asyncio

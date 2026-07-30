@@ -107,3 +107,43 @@ def test_cardiometabolic_search_overrides_preserve_coding_condition() -> None:
         'AND AREA[InterventionName]"semaglutide" '
         'AND AREA[InterventionName]"empagliflozin"'
     )
+
+
+def test_rare_disease_search_overrides_preserve_coding_terms() -> None:
+    pico = PICO(
+        population="Adults with myasthenia gravis without acute exacerbation",
+        condition="myasthenia gravis without acute exacerbation",
+        intervention="efgartigimod alfa",
+        comparator="Rozanolixizumab",
+        outcomes=["activities of daily living"],
+        normalized_search_terms=[
+            "myasthenia gravis",
+            "efgartigimod",
+            "rozanolixizumab",
+        ],
+    )
+
+    pubmed_query = build_pubmed_query(
+        pico,
+        condition_term="myasthenia gravis",
+        intervention_term="efgartigimod",
+        comparator_term="rozanolixizumab",
+        outcome_terms=("MG-ADL",),
+    )
+    trial_query = build_trial_query(
+        pico,
+        condition_term="myasthenia gravis",
+        intervention_term="efgartigimod",
+        comparator_term="rozanolixizumab",
+    )
+
+    assert pico.condition == "myasthenia gravis without acute exacerbation"
+    assert pico.intervention == "efgartigimod alfa"
+    assert pico.comparator == "Rozanolixizumab"
+    assert pubmed_query.query == (
+        '"myasthenia gravis"[Title/Abstract] '
+        'AND "efgartigimod"[Title/Abstract] '
+        'AND "rozanolixizumab"[Title/Abstract] '
+        'AND ("MG-ADL"[Title/Abstract])'
+    )
+    assert trial_query.query == ('"myasthenia gravis" AND ("efgartigimod" OR "rozanolixizumab")')

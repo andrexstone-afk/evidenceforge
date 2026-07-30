@@ -105,6 +105,17 @@ async def test_cardiometabolic_strategy_retrieves_both_sources() -> None:
         await pubmed.aclose()
         await trials.aclose()
 
+    assert observed_queries["pubmed"] == (
+        '"type 2 diabetes mellitus"[Title/Abstract] '
+        'AND "semaglutide"[Title/Abstract] '
+        'AND "empagliflozin"[Title/Abstract] '
+        'AND ("HbA1c"[Title/Abstract])'
+    )
+    assert observed_queries["trials"] == (
+        'AREA[ConditionSearch]"type 2 diabetes mellitus" '
+        'AND AREA[InterventionName]"semaglutide" '
+        'AND AREA[InterventionName]"empagliflozin"'
+    )
     assert observed_queries["pubmed"] == result.pubmed.metadata.query
     assert observed_queries["trials"] == result.clinical_trials.metadata.query
     assert [record.pmid for record in result.pubmed.records] == ["33333333"]

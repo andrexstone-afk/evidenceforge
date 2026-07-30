@@ -132,3 +132,79 @@ CLINICAL_TRIALS_RESPONSE = {
     ],
     "nextPageToken": "synthetic-next-page",
 }
+
+CARDIOMETABOLIC_PUBMED_SEARCH_RESPONSE = {
+    "header": {"type": "esearch", "version": "0.3"},
+    "esearchresult": {
+        "count": "1",
+        "retmax": "1",
+        "retstart": "0",
+        "idlist": ["33333333"],
+    },
+}
+
+CARDIOMETABOLIC_PUBMED_FETCH_XML = """\
+<?xml version="1.0" encoding="UTF-8"?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation>
+      <PMID Version="1">33333333</PMID>
+      <Article>
+        <Journal>
+          <JournalIssue><PubDate><Year>2025</Year></PubDate></JournalIssue>
+          <Title>Synthetic Cardiometabolic Journal</Title>
+        </Journal>
+        <ArticleTitle>Synthetic direct cardiometabolic comparison</ArticleTitle>
+        <Abstract>
+          <AbstractText>
+            Semaglutide, empagliflozin, and HbA1c appear only as synthetic
+            ranking terms. No clinical result is asserted.
+          </AbstractText>
+        </Abstract>
+        <Language>eng</Language>
+        <PublicationTypeList>
+          <PublicationType>Randomized Controlled Trial</PublicationType>
+        </PublicationTypeList>
+      </Article>
+    </MedlineCitation>
+    <PubmedData>
+      <ArticleIdList><ArticleId IdType="pubmed">33333333</ArticleId></ArticleIdList>
+    </PubmedData>
+  </PubmedArticle>
+</PubmedArticleSet>
+"""
+
+CARDIOMETABOLIC_CLINICAL_TRIALS_RESPONSE = {
+    "totalCount": 1,
+    "studies": [
+        {
+            "protocolSection": {
+                "identificationModule": {
+                    "nctId": "NCT00000002",
+                    "briefTitle": "Synthetic direct cardiometabolic trial",
+                },
+                "statusModule": {
+                    "overallStatus": "COMPLETED",
+                    "startDateStruct": {"date": "2024-01"},
+                    "completionDateStruct": {"date": "2025-01"},
+                    "lastUpdatePostDateStruct": {"date": "2025-02"},
+                },
+                "designModule": {
+                    "studyType": "INTERVENTIONAL",
+                    "phases": ["PHASE3"],
+                    "designInfo": {"allocation": "RANDOMIZED"},
+                    "enrollmentInfo": {"count": 100, "type": "ACTUAL"},
+                },
+                "conditionsModule": {"conditions": ["Type 2 diabetes mellitus"]},
+                "armsInterventionsModule": {
+                    "interventions": [
+                        {"type": "DRUG", "name": "Semaglutide"},
+                        {"type": "DRUG", "name": "Empagliflozin"},
+                    ]
+                },
+                "outcomesModule": {"primaryOutcomes": [{"measure": "Synthetic HbA1c outcome"}]},
+            },
+            "hasResults": True,
+        }
+    ],
+}

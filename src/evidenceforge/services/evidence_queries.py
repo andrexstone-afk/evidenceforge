@@ -9,6 +9,8 @@ from evidenceforge.models.pico import PICO
 def build_pubmed_query(
     pico: PICO,
     *,
+    condition_term: str | None = None,
+    outcome_terms: tuple[str, ...] | None = None,
     date_from: date | None = None,
     date_to: date | None = None,
     publication_types: tuple[str, ...] = (),
@@ -16,13 +18,15 @@ def build_pubmed_query(
 ) -> EvidenceQuery:
     """Build a PubMed ESearch expression without hidden source calls."""
 
+    condition = pico.condition if condition_term is None else condition_term
+    outcomes = tuple(pico.outcomes) if outcome_terms is None else outcome_terms
     concepts = [
-        _pubmed_phrase(pico.condition),
+        _pubmed_phrase(condition),
         _pubmed_phrase(pico.intervention),
         _pubmed_phrase(pico.comparator),
     ]
-    if pico.outcomes:
-        concepts.append(f"({' OR '.join(_pubmed_phrase(item) for item in pico.outcomes)})")
+    if outcomes:
+        concepts.append(f"({' OR '.join(_pubmed_phrase(item) for item in outcomes)})")
     filters: dict[str, str] = {}
     if (date_from is None) != (date_to is None):
         raise ValueError("date_from and date_to must be provided together")
@@ -50,21 +54,31 @@ def build_pubmed_query(
 def build_trial_query(
     pico: PICO,
     *,
+    condition_term: str | None = None,
+    direct_comparison: bool = False,
     overall_status: tuple[str, ...] = (),
     page_size: int = 20,
 ) -> EvidenceQuery:
     """Build a ClinicalTrials.gov v2 query.term expression."""
 
-    intervention_group = " OR ".join(
-        (f'"{_clean_term(pico.intervention)}"', f'"{_clean_term(pico.comparator)}"')
-    )
+    condition = _clean_term(pico.condition if condition_term is None else condition_term)
+    intervention = _clean_term(pico.intervention)
+    comparator = _clean_term(pico.comparator)
+    if direct_comparison:
+        query_text = (
+            f'AREA[ConditionSearch]"{condition}" '
+            f'AND AREA[InterventionName]"{intervention}" '
+            f'AND AREA[InterventionName]"{comparator}"'
+        )
+    else:
+        query_text = f'"{condition}" AND ("{intervention}" OR "{comparator}")'
     filters: dict[str, str] = {}
     cleaned_statuses = tuple(_clean_term(item).upper().replace(" ", "_") for item in overall_status)
     if cleaned_statuses:
         filters["overall_status"] = ",".join(cleaned_statuses)
     return EvidenceQuery(
         source=EvidenceSource.CLINICAL_TRIALS,
-        query=f'"{_clean_term(pico.condition)}" AND ({intervention_group})',
+        query=query_text,
         filters=filters,
         page_size=page_size,
     )

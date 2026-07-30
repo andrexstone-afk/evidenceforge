@@ -67,13 +67,26 @@ class EvidenceRetrievalPipeline:
         *,
         current_year: int,
         page_size: int = 20,
+        condition_term: str | None = None,
+        outcome_terms: tuple[str, ...] | None = None,
+        direct_trial_comparison: bool = False,
     ) -> EvidenceRetrievalResult:
         """Execute a reproducible first-page retrieval for a validated PICO."""
 
         if current_year < 1900 or current_year > 9999:
             raise ValueError("current_year must be between 1900 and 9999")
-        pubmed_query = build_pubmed_query(pico, page_size=page_size)
-        trial_query = build_trial_query(pico, page_size=page_size)
+        pubmed_query = build_pubmed_query(
+            pico,
+            condition_term=condition_term,
+            outcome_terms=outcome_terms,
+            page_size=page_size,
+        )
+        trial_query = build_trial_query(
+            pico,
+            condition_term=condition_term,
+            direct_comparison=direct_trial_comparison,
+            page_size=page_size,
+        )
         pubmed_page, trial_page = await asyncio.gather(
             self._pubmed.search(pubmed_query),
             self._clinical_trials.search(trial_query),

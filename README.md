@@ -20,8 +20,9 @@ reviewed artifacts. Phase 6 now has a provenance-bearing evaluation contract,
 deterministic metric engine, and cardiometabolic and rare-disease terminology-coded
 seeds plus verified cardiometabolic and rare-disease retrieval strategies; reviewed
 cross-domain evidence examples and the physician-reviewed benchmark remain in
-progress. High-severity QA issues cannot auto-pass. The API currently ingests completed
-validated artifacts; question-to-brief API orchestration remains later work.
+progress. A deterministic question-selection worksheet is ready for physician review
+after Helios. High-severity QA issues cannot auto-pass. The API currently ingests
+completed validated artifacts; question-to-brief API orchestration remains later work.
 
 ## Planned pipeline
 
@@ -124,6 +125,14 @@ uv run evidenceforge evaluation score \
   --output evaluation-report.json
 ```
 
+Generate the no-gold-label physician question-selection worksheet:
+
+```bash
+uv run evidenceforge evaluation review-packet \
+  --input examples/evaluation/benchmark-question-set-v0.1.json \
+  --output benchmark-question-review-packet.md
+```
+
 Evaluation reports preserve dataset and reviewer provenance, system/model/prompt
 versions, metric definitions and denominators, limitations, latency, cost basis, and an
 input digest. A versioned
@@ -161,9 +170,9 @@ clients are async, allowlisted, and replaceable. See [architecture](docs/archite
 - Phase 4: complete — normalized persistence and stable API contracts
 - Phase 5: complete — JSON/Markdown/PDF exports and Streamlit evidence-review interface
 - Phase 6: in progress — deterministic evaluation contract, draft question-selection
-  handoff, cardiometabolic/rare-disease coded-brief seeds, and both cross-domain
-  retrieval strategies complete; reviewed cross-domain evidence examples and
-  physician-reviewed benchmark pending
+  handoff and review-packet generator, cardiometabolic/rare-disease coded-brief seeds,
+  and both cross-domain retrieval strategies complete; reviewed cross-domain evidence
+  examples and physician-reviewed benchmark pending
 - Phase 7: planned — portfolio documentation, release, and interview-ready walkthrough
 
 ## License and contributing

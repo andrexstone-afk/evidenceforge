@@ -20,7 +20,7 @@ from evidenceforge.clients.terminology.base import TerminologyClientError
 from evidenceforge.core.safety import UnsafeClinicalQuestionError, validate_no_phi_artifact
 from evidenceforge.db.repository import BriefNotFoundError, BriefRepository
 from evidenceforge.db.session import create_engine_for_url, create_session_factory
-from evidenceforge.evaluation import score_evaluation
+from evidenceforge.evaluation import render_question_review_packet, score_evaluation
 from evidenceforge.exporters import PDFExportError, render_markdown
 from evidenceforge.llm import LLMProvider, MockLLMProvider, OpenAIProvider
 from evidenceforge.models.evaluation import BenchmarkQuestionSet, EvaluationReport, EvaluationRun
@@ -34,7 +34,7 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 brief_app = typer.Typer(help="Create and inspect coded clinical briefs.")
-evaluation_app = typer.Typer(help="Score validated evaluation runs.")
+evaluation_app = typer.Typer(help="Prepare benchmark reviews and score evaluation runs.")
 app.add_typer(brief_app, name="brief")
 app.add_typer(evaluation_app, name="evaluation")
 
@@ -267,27 +267,15 @@ def score_evaluation_run(
     if output.exists() and not force:
         raise typer.BadParameter(f"Output already exists: {output}; pass --force to replace it")
     try:
-        descriptor = os.open(input_path, EVALUATION_INPUT_OPEN_FLAGS)
-        try:
-            if not stat.S_ISREG(os.fstat(descriptor).st_mode):
-                raise typer.BadParameter("Evaluation input must be a regular file")
-            with os.fdopen(descriptor, "rb", closefd=False) as stream:
-                raw = stream.read(MAX_EVALUATION_INPUT_BYTES + 1)
-        finally:
-            os.close(descriptor)
-        if len(raw) > MAX_EVALUATION_INPUT_BYTES:
-            raise typer.BadParameter("Evaluation input exceeds the 10 MiB safety limit")
-        serialized = raw.decode("utf-8")
+        serialized = _read_evaluation_input(input_path)
         validate_no_phi_artifact(serialized)
         run = EvaluationRun.model_validate_json(serialized)
         report = score_evaluation(run, tool_version=__version__)
-        _write_evaluation_report(
+        _write_evaluation_artifact(
             output=output,
             content=report.model_dump_json(indent=2) + "\n",
             force=force,
         )
-    except FileNotFoundError as error:
-        raise typer.BadParameter(f"Evaluation input does not exist: {input_path}") from error
     except UnicodeDecodeError as error:
         raise typer.BadParameter("Evaluation input must be UTF-8 JSON") from error
     except UnsafeClinicalQuestionError as error:
@@ -307,6 +295,54 @@ def score_evaluation_run(
     typer.echo(f"Wrote evaluation report to {output}")
 
 
+@evaluation_app.command("review-packet")
+def create_question_review_packet(
+    input_path: Annotated[
+        Path,
+        typer.Option("--input", help="Validated benchmark-question-set JSON input."),
+    ],
+    output: Annotated[
+        Path,
+        typer.Option("--output", "-o", help="Destination Markdown worksheet."),
+    ],
+    force: Annotated[
+        bool,
+        typer.Option("--force", help="Replace an existing output file."),
+    ] = False,
+) -> None:
+    """Create a no-gold-label question-selection worksheet without external calls."""
+
+    if output.is_dir():
+        raise typer.BadParameter(f"Output path is a directory: {output}")
+    if output.exists() and not force:
+        raise typer.BadParameter(f"Output already exists: {output}; pass --force to replace it")
+    try:
+        serialized = _read_evaluation_input(input_path)
+        validate_no_phi_artifact(serialized)
+        question_set = BenchmarkQuestionSet.model_validate_json(serialized)
+        packet = render_question_review_packet(question_set)
+        _write_evaluation_artifact(output=output, content=packet, force=force)
+    except UnicodeDecodeError as error:
+        raise typer.BadParameter("Evaluation input must be UTF-8 JSON") from error
+    except UnsafeClinicalQuestionError as error:
+        raise typer.BadParameter(str(error)) from error
+    except ValidationError as error:
+        raise typer.BadParameter(
+            "Invalid benchmark question set; see docs/evaluation.md for the contract"
+        ) from error
+    except ValueError as error:
+        raise typer.BadParameter(str(error)) from error
+    except FileExistsError as error:
+        raise typer.BadParameter(
+            f"Output already exists: {output}; pass --force to replace it"
+        ) from error
+    except OSError as error:
+        raise typer.BadParameter(
+            f"Could not read or write evaluation artifacts: {error}"
+        ) from error
+    typer.echo(f"Wrote question review packet to {output}")
+
+
 @evaluation_app.command("schema")
 def show_evaluation_schema() -> None:
     """Print the versioned evaluation input and report JSON Schemas."""
@@ -323,8 +359,27 @@ def show_evaluation_schema() -> None:
     )
 
 
-def _write_evaluation_report(*, output: Path, content: str, force: bool) -> None:
-    """Write a report without partial forced replacements or silent overwrites."""
+def _read_evaluation_input(input_path: Path) -> str:
+    """Read one bounded, regular UTF-8 evaluation artifact."""
+
+    try:
+        descriptor = os.open(input_path, EVALUATION_INPUT_OPEN_FLAGS)
+    except FileNotFoundError as error:
+        raise typer.BadParameter(f"Evaluation input does not exist: {input_path}") from error
+    try:
+        if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+            raise typer.BadParameter("Evaluation input must be a regular file")
+        with os.fdopen(descriptor, "rb", closefd=False) as stream:
+            raw = stream.read(MAX_EVALUATION_INPUT_BYTES + 1)
+    finally:
+        os.close(descriptor)
+    if len(raw) > MAX_EVALUATION_INPUT_BYTES:
+        raise typer.BadParameter("Evaluation input exceeds the 10 MiB safety limit")
+    return raw.decode("utf-8")
+
+
+def _write_evaluation_artifact(*, output: Path, content: str, force: bool) -> None:
+    """Write an artifact without partial forced replacements or silent overwrites."""
 
     if not force:
         created = False

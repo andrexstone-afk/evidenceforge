@@ -44,6 +44,25 @@ into gold PICO, terminology, retrieval, or claim-support annotations, and the sc
 command does not accept it. The starter's three questions are deliberately below the
 planned 15–30 case benchmark.
 
+The committed
+[`benchmark-question-review-packet-v0.1.md`](../examples/evaluation/benchmark-question-review-packet-v0.1.md)
+is deterministically rendered from that JSON for physician review after Helios. It is
+an incomplete worksheet, not evidence that review occurred. Generate or refresh a
+packet with:
+
+```bash
+uv run evidenceforge evaluation review-packet \
+  --input examples/evaluation/benchmark-question-set-v0.1.json \
+  --output benchmark-question-review-packet.md
+```
+
+The command accepts only a validated draft question set, applies the existing bounded
+UTF-8 and PHI-screened evaluation input boundary, escapes Markdown/HTML control text,
+and preserves existing output unless `--force` is supplied. It does not call a model
+or external service. The worksheet supports only Include, Revise, or Exclude decisions
+and explicitly excludes evidence-density, ontology, retrieval, claim-support, numeric,
+and treatment annotations.
+
 ## Aligned case contract
 
 Each case contains a de-identified population-level question and:
@@ -125,7 +144,7 @@ The remaining Phase 6 benchmark should contain approximately 15–30 questions s
 
 Before reporting results:
 
-1. freeze a versioned question set and annotation guide;
+1. freeze a versioned question set and complete its question-selection review packet;
 2. retrieve terminology and evidence references from the official services;
 3. record reviewer roles, review dates, adjudication method, and limitations;
 4. run the configured pipeline without changing gold labels;

@@ -47,7 +47,7 @@ planned 15–30 case benchmark.
 The committed
 [`benchmark-question-review-packet-v0.1.md`](../examples/evaluation/benchmark-question-review-packet-v0.1.md)
 is deterministically rendered from that JSON for physician review after Helios. It is
-an uncompleted worksheet, not evidence that review occurred. Generate or refresh a
+an incomplete worksheet, not evidence that review occurred. Generate or refresh a
 packet with:
 
 ```bash

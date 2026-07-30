@@ -20,6 +20,7 @@ uses explicit, human-inspectable overrides:
 
 - condition term: `myasthenia gravis`
 - intervention term: `efgartigimod`
+- comparator term: `rozanolixizumab`
 - outcome term: `MG-ADL`
 - trial scope: either named intervention, so both independent development programs can
   be inspected
